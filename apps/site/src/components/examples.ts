@@ -1,4 +1,7 @@
-/** One card on the landing page. Add an entry here when a new example gets its page. */
+/** Where the showcase's code lives. */
+export const REPO_URL = "https://github.com/subham8391/openui-showcase";
+
+/** One example featured on the landing page. Add an entry here when a new example gets its page. */
 export type Example = {
   href: string;
   name: string;

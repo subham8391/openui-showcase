@@ -20,7 +20,19 @@ const KIT_ICONS: Record<string, string> = {
 export function KitWorkspace() {
   const [kitId, setKitId] = useState(KITS[0].id);
   const [view, setView] = useState<View>("gallery");
+  // The gallery dashboard a link asked for (?kit=ecommerce&dashboard=2).
+  const [startAt, setStartAt] = useState(0);
   const kit = KITS.find((k) => k.id === kitId)!;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linked = KITS.find((k) => k.id === params.get("kit"));
+    if (!linked) return;
+    const index = Number(params.get("dashboard"));
+    setKitId(linked.id);
+    setView("gallery");
+    if (Number.isInteger(index) && index >= 0 && index < linked.gallery.length) setStartAt(index);
+  }, []);
 
   return (
     <SiteShell crumb="Dashboard kits">
@@ -40,7 +52,10 @@ export function KitWorkspace() {
             type="button"
             className="kit-picker__option"
             aria-pressed={k.id === kitId}
-            onClick={() => setKitId(k.id)}
+            onClick={() => {
+              setKitId(k.id);
+              setStartAt(0);
+            }}
           >
             <span className="kit-picker__icon" aria-hidden>
               <svg viewBox="0 0 24 24">
@@ -73,7 +88,9 @@ export function KitWorkspace() {
         ))}
       </div>
 
-      {view === "gallery" && <GalleryView key={kit.id} kitId={kit.id} />}
+      {view === "gallery" && (
+        <GalleryView key={`${kit.id}-${startAt}`} kitId={kit.id} startAt={startAt} />
+      )}
       {view === "generate" && <GenerateView key={kit.id} kitId={kit.id} />}
       {view === "prompt" && <PromptView key={kit.id} kitId={kit.id} />}
     </SiteShell>
@@ -106,9 +123,22 @@ function useKitRenderer(kitId: string) {
   };
 }
 
-function GalleryView({ kitId }: { kitId: string }) {
+/** One gallery dashboard rendered as it is in the gallery, for previews elsewhere. */
+export function KitPreview({ kitId, index = 0 }: { kitId: string; index?: number }) {
+  const { kit, library, toolProvider } = useKitRenderer(kitId);
+  return (
+    <Renderer
+      response={kit.gallery[index].program}
+      library={library}
+      isStreaming={false}
+      toolProvider={toolProvider}
+    />
+  );
+}
+
+function GalleryView({ kitId, startAt = 0 }: { kitId: string; startAt?: number }) {
   const { kit, library, toolProvider, calls, errors, onError, reset } = useKitRenderer(kitId);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(startAt);
   const dashboard = kit.gallery[index];
 
   return (
