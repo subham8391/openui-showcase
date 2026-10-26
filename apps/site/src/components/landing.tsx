@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
 import { KITS } from "../kits";
 import { EXAMPLES, REPO_URL } from "./examples";
 import { KitPreview } from "./kit-workspace";
+import { ScaledFrame } from "./scaled-frame";
 import { SiteShell } from "./site-shell";
 
 const DASHBOARDS = KITS.reduce((n, k) => n + k.gallery.length, 0);
@@ -24,27 +24,8 @@ const SNIPPET = (() => {
   return shown.map((line) => (line.length > 84 ? `${line.slice(0, 83)}…` : line)).join("\n");
 })();
 
-/** Width the preview dashboard is laid out at before it is scaled to fit its frame. */
-const PREVIEW_WIDTH = 1280;
-
-/**
- * A real gallery dashboard, laid out at desktop width and scaled down to its
- * frame. Read-only: it can't be focused or clicked; the link around it opens
- * the dashboard itself.
- */
+/** A real gallery dashboard, scaled down; the link around it opens the dashboard itself. */
 function LivePreview() {
-  const frame = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = frame.current;
-    if (!el) return;
-    const fit = () =>
-      el.style.setProperty("--preview-scale", String(el.clientWidth / PREVIEW_WIDTH));
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <Link
       href={`/dashboard-kits?kit=${KITS[0].id}&dashboard=0`}
@@ -55,11 +36,9 @@ function LivePreview() {
         <span className="preview__dot" aria-hidden />
         Live · {KITS[0].name} · {KITS[0].gallery[0].title}
       </span>
-      <div ref={frame} className="preview__frame" aria-hidden inert>
-        <div className="preview__stage" style={{ width: PREVIEW_WIDTH }}>
-          <KitPreview kitId={KITS[0].id} />
-        </div>
-      </div>
+      <ScaledFrame className="preview__frame">
+        <KitPreview kitId={KITS[0].id} />
+      </ScaledFrame>
     </Link>
   );
 }
