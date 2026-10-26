@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the dashboard kits library
+        run: pnpm run build:kits
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Format check
+        run: pnpm run format:check
+
+      # The site's typecheck builds the library and writes the kit library
+      # specs to apps/site/src/generated/, which the library's prompt-size
+      # tests read (they skip without them).
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Library tests
+        run: pnpm --filter @openuidev/dashboard-kits run test
+
+      - name: Render every gallery dashboard
+        run: pnpm --filter site run check
+
+      - name: Build the site
+        run: pnpm --filter site exec next build

@@ -1,0 +1,574 @@
+// The e-commerce kit's components.
+
+.kit-waterfall {
+  display: flex;
+  flex-direction: column;
+  font: var(--kit-body);
+}
+.kit-waterfall__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 34%) 1fr auto 3.6rem;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.kit-waterfall__row--total,
+.kit-waterfall__row--base {
+  font-weight: 600;
+}
+.kit-waterfall__row--total {
+  border-top: 1px solid var(--kit-border);
+  margin-top: 2px;
+  padding-top: 8px;
+}
+.kit-waterfall__label {
+  color: var(--kit-ink);
+  min-width: 0;
+}
+.kit-waterfall__row--add .kit-waterfall__label,
+.kit-waterfall__row--subtract .kit-waterfall__label {
+  color: var(--kit-ink-2);
+}
+.kit-waterfall__track {
+  position: relative;
+  height: 14px;
+}
+.kit-waterfall__bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+}
+.kit-waterfall__row--add .kit-waterfall__bar,
+.kit-waterfall__row--subtract .kit-waterfall__bar {
+  top: 2px;
+  bottom: 2px;
+}
+.kit-waterfall__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kit-waterfall__change {
+  text-align: right;
+  font: 500 12px var(--kit-font);
+}
+
+.kit-roas {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(70px, 1fr) 3.8rem;
+  align-items: center;
+  gap: 10px;
+  min-width: 210px;
+}
+.kit-roas__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.kit-roas__track {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--kit-sunk);
+}
+.kit-roas__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--kit-accent);
+}
+.kit-roas__bar--below {
+  background: var(--kit-bad);
+}
+.kit-roas__target {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--kit-ink);
+}
+.kit-roas > :last-child {
+  font: 500 12px var(--kit-font);
+  text-align: right;
+}
+
+.kit-segments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 36px) / 4)), 1fr));
+  gap: 12px;
+}
+.kit-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--kit-border);
+  background: var(--kit-sunk);
+  font: var(--kit-body);
+}
+.kit-segment__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.kit-segment__name {
+  font-weight: 600;
+  color: var(--kit-ink);
+}
+.kit-segment__count {
+  font: 600 28px/1 var(--kit-font);
+  letter-spacing: -0.025em;
+  color: var(--kit-ink);
+}
+.kit-segment__bars {
+  display: grid;
+  grid-template-columns: 4.6rem 1fr 2.4rem;
+  align-items: center;
+  gap: 6px 8px;
+  font: 500 12px var(--kit-font);
+  color: var(--kit-ink-3);
+}
+.kit-segment__bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--kit-accent) 10%, var(--kit-card));
+  overflow: hidden;
+}
+.kit-segment__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--kit-accent);
+}
+.kit-segment__fill--muted {
+  background: var(--kit-muted-mark);
+}
+.kit-segment__pct {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--kit-ink);
+}
+.kit-segment__stats {
+  font: 400 12px/1.4 var(--kit-font);
+  color: var(--kit-ink-3);
+}
+.kit-segment__action {
+  padding-top: 10px;
+  border-top: 1px solid var(--kit-border);
+  font: 500 12.5px/1.45 var(--kit-font);
+  color: var(--kit-ink);
+}
+
+.kit-monogram {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--kit-mono) 16%, var(--kit-card));
+  color: color-mix(in oklab, var(--kit-mono) 50%, var(--kit-ink));
+  font: 650 12.5px var(--kit-font);
+  letter-spacing: 0.02em;
+}
+.kit-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+.kit-product__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.kit-units {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.kit-units .kit-sparkline {
+  width: 70px;
+}
+.kit-flag {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--kit-bad-bg);
+  color: var(--kit-bad-ink);
+  font-weight: 600;
+}
+
+.kit-leaderboard {
+  container-type: inline-size;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font: var(--kit-body);
+}
+.kit-leaderboard__item {
+  display: grid;
+  // minmax(0, …): a plain 1fr won't shrink below its content, and the line
+  // ran past the card on a phone.
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+.kit-leaderboard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.kit-leaderboard__line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.kit-leaderboard__name {
+  flex: 0 1 auto;
+  min-width: 4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--kit-ink);
+}
+.kit-leaderboard__stock,
+.kit-leaderboard__line > .kit-num {
+  flex: none;
+}
+// A product's sales over the period, between its name and its revenue.
+.kit-leaderboard__spark {
+  flex: 0 0 64px;
+  margin-left: auto;
+}
+// Narrow lists drop the sparkline, so the name and revenue keep their room;
+// the meter and the change below still show where each product stands.
+@container (max-width: 380px) {
+  .kit-leaderboard__spark {
+    display: none;
+  }
+}
+
+.kit-alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font: var(--kit-body);
+}
+.kit-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 0;
+  border-top: 1px solid var(--kit-border);
+}
+.kit-alert:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.kit-alert__head,
+.kit-alert__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.kit-alert__meta {
+  font: 400 12px/1.4 var(--kit-font);
+  color: var(--kit-ink-3);
+}
+.kit-alert__cover {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.kit-alert__days {
+  font: 600 18px/1 var(--kit-font);
+  letter-spacing: -0.02em;
+  color: var(--kit-ink);
+  font-variant-numeric: tabular-nums;
+}
+.kit-alert__days small {
+  font: 500 11.5px var(--kit-font);
+  color: var(--kit-ink-3);
+  letter-spacing: 0;
+}
+// Days of cover on a timeline: today at the left edge, the reorder point as a
+// tick, the day an open order lands as a marker, and any gap hatched.
+.kit-alert__timeline {
+  position: relative;
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--kit-neutral-bg);
+}
+.kit-alert__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--kit-warn);
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.kit-alert__fill--critical,
+.kit-alert__fill--out {
+  background: var(--kit-bad);
+}
+.kit-alert__gap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--kit-bad) 45%, transparent) 0 2px,
+    transparent 2px 5px
+  );
+}
+.kit-alert__tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--kit-ink-2);
+  border-radius: 1px;
+}
+.kit-alert__po {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--kit-card);
+  border: 2px solid var(--kit-s1);
+}
+
+// Store orders against ad-platform claims.
+.kit-recon {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font: var(--kit-body);
+}
+.kit-recon__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kit-recon__row {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+}
+.kit-recon__name {
+  font-weight: 600;
+  color: var(--kit-ink);
+}
+.kit-recon__bars {
+  position: relative;
+  height: 14px;
+}
+.kit-recon__claimed,
+.kit-recon__store {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.kit-recon__claimed,
+.kit-recon__key--claimed {
+  border: 1.5px dashed var(--kit-ink-3);
+  background: transparent;
+}
+.kit-recon__store,
+.kit-recon__key--store {
+  background: var(--kit-s1);
+}
+.kit-recon__figures {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  font: 400 12px/1.4 var(--kit-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--kit-ink-2);
+}
+.kit-recon__legend {
+  display: flex;
+  gap: 16px;
+  font: 500 11.5px var(--kit-font);
+  color: var(--kit-ink-3);
+}
+.kit-recon__key {
+  display: inline-block;
+  width: 12px;
+  height: 9px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+.kit-recon__summary {
+  margin: 0;
+  color: var(--kit-ink-2);
+  text-wrap: pretty;
+}
+
+// Size exchanges: ordered size against the size swapped to.
+.kit-exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font: var(--kit-body);
+  min-width: 0;
+}
+.kit-exchange__lead {
+  margin: 0;
+  color: var(--kit-ink-2);
+}
+.kit-exchange__scroll {
+  overflow-x: auto;
+}
+.kit-exchange__table {
+  border-collapse: separate;
+  border-spacing: 3px;
+  width: 100%;
+  font: 500 12px var(--kit-font);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.kit-exchange__table th {
+  font-weight: 600;
+  color: var(--kit-ink-3);
+  padding: 4px;
+}
+.kit-exchange__corner {
+  text-align: left;
+  font-weight: 500 !important;
+  white-space: nowrap;
+}
+.kit-exchange__cell {
+  height: 30px;
+  min-width: 34px;
+  border-radius: 5px;
+  background: var(--kit-sunk);
+  color: var(--kit-ink);
+}
+.kit-exchange__cell--same {
+  box-shadow: inset 0 0 0 1.5px var(--kit-ink-3);
+}
+
+// Ad creatives: hook and hold as small meters.
+.kit-creatives td {
+  vertical-align: middle;
+}
+.kit-creative__rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.kit-creative__meter {
+  display: inline-block;
+  width: 42px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--kit-neutral-bg);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--kit-s1);
+  }
+}
+
+// Recommended actions with approve and dismiss, and the decision log.
+
+// ── Inventory health and channel profit ──
+.kit-stockhealth {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+// ABC class: A carries most of the revenue, so it reads strongest.
+.kit-abc {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font: 600 11.5px var(--kit-font);
+}
+.kit-abc--a {
+  background: var(--kit-accent);
+  color: var(--kit-card);
+}
+.kit-abc--b {
+  background: color-mix(in oklab, var(--kit-accent) 22%, var(--kit-card));
+  color: var(--kit-ink);
+}
+.kit-abc--c {
+  background: var(--kit-sunk);
+  color: var(--kit-ink-3);
+}
+// A bar against a reference tick: days of cover against the reorder point,
+// or a margin against the comparison's.
+.kit-cover {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 170px;
+}
+.kit-cover__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--kit-sunk);
+}
+.kit-cover__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--kit-accent);
+}
+.kit-cover__bar--negative {
+  background: var(--kit-bad);
+}
+.kit-cover__bar--warning {
+  background: var(--kit-warn);
+}
+.kit-cover__bar--info {
+  background: var(--kit-muted-mark);
+}
+.kit-cover__tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--kit-ink-2);
+}

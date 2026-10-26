@@ -1,0 +1,125 @@
+import type { ComponentGroup } from "@openuidev/react-lang";
+
+// The published @openuidev/thesys 0.14.0 dashboardLibrary ships without its
+// component groups, so its prompt lists signatures but none of the layout
+// rules. These groups and rules restore them for every kit. They are adapted
+// from genui-sdk `packages/c1/src/dashboard/library.ts` and
+// `scripts/dashboardPromptOptions.ts` (genui-sdk main 398582da) to the 0.14.0
+// signatures: trends are `{direction, value}` objects and filter options are
+// `{value, label}` objects. Drop this file once the base library carries them.
+
+export const BASE_COMPONENT_GROUPS: ComponentGroup[] = [
+  {
+    name: "Dashboard Layout",
+    components: [
+      "Dashboard",
+      "DashboardHeader",
+      "Section",
+      "FilterBar",
+      "FilterSelect",
+      "FilterMultiSelect",
+      "DatePicker",
+      "CardRow",
+      "IconButton",
+    ],
+    notes: [
+      "Use Dashboard as the dashboard root with DashboardHeader plus Section children.",
+      "Use one Section for most dashboard content. Create multiple Sections only for altogether different topics or domains. Do not create a new Section for every row or card.",
+      "A Section owns rows and an optional section-scoped FilterBar. Put a FilterBar in the Section whose rows it affects.",
+      "FilterBar supports only FilterSelect, FilterMultiSelect, and DatePicker. Do not put Select, TextContent, or TagBlock inside FilterBar.",
+      "Valid CardRow patterns are: small-only, medium-only, medium+large mixed, or large-only.",
+    ],
+  },
+  {
+    name: "Shell Cards",
+    components: [
+      "SmallCard",
+      "MediumCard",
+      "LargeCard",
+      "DashboardCardHeader",
+      "TextBlock",
+      "List",
+      "ListItem",
+      "EntityList",
+      "Callout",
+      "Button",
+      "ButtonGroup",
+      "Select",
+      "SelectItem",
+      "ImageBlock",
+      "Tag",
+      "TagBlock",
+      "TextContent",
+      "MarkDownRenderer",
+      "TextCallout",
+    ],
+    notes: [
+      "SmallCard is compact. MediumCard supports DashboardCardHeader, text, callouts, charts, tables, lists, actions, tags, and metrics. LargeCard supports the same content as MediumCard except PieChart, RadialChart, RadarChart, List, and EntityList.",
+      'Use DashboardCardHeader as the first child inside MediumCard or LargeCard. If a card has a clear leading KPI, make that value the DashboardCardHeader title with titleType "number" and use the subtitle for the label.',
+      "Do not use PieChart, RadialChart, or RadarChart inside LargeCard.",
+      "Use MediumCard(children, true) only for dense cards with multiple body blocks or large tables.",
+      "SmallCard has three forms: SmallCard(title, metric, trend?) for KPIs; SmallCard(IconText(Icon(name), variant), [MetricIndicator(value, label, trend?)]) for a KPI with a universal symbol; SmallCard(lhs, rhs) for compact entity rows.",
+    ],
+  },
+  {
+    name: "Metrics",
+    components: ["MetricIndicator", "OverviewCardItem", "OverviewCardBlock"],
+    notes: [],
+  },
+  {
+    name: "Charts",
+    components: [
+      "LineChart",
+      "BarChart",
+      "AreaChart",
+      "HorizontalBarChart",
+      "RadarChart",
+      "ScatterChart",
+      "RadialChart",
+      "PieChart",
+      "Series",
+      "ScatterSeries",
+      "Point",
+    ],
+    notes: [],
+  },
+  {
+    name: "Data Display",
+    components: ["Table", "Col"],
+    notes: [
+      "Use Table with Col children for tabular data. Tables auto-paginate at 10 rows.",
+      'Set Col type to "number" for right-aligned numeric columns.',
+    ],
+  },
+  {
+    name: "Primitives",
+    components: ["Icon", "IconText", "IconTag"],
+    notes: ['Icon takes a lucide icon name such as "dollar-sign" or "users".'],
+  },
+];
+
+export const BASE_RULES: string[] = [
+  'Trends are objects: {direction: "up" | "down", value: number}.',
+  'FilterSelect options are objects: [{value: "30d", label: "Last 30 days"}].',
+];
+
+/** Rules every kit shares: dashboards read live data through the kit's tools. */
+export const DATA_RULES: string[] = [
+  "Every number on the dashboard must come from a Query of the listed tools. Never type sample numbers, labels, or rows into the program.",
+  "Tool outputs are shaped for the component that shows them: pass the field straight through, e.g. KpiStrip(kpis.metrics), ConversionFunnel(funnel.steps), CohortGrid(c.cohorts, c.periodLabels, c.format). The tool descriptions name the component each one feeds.",
+  'Pluck table columns from an object array: Col("Name", result.rows.name).',
+  "Declare each filter as a $variable with a default near the top of the program, before any statement that uses it, bind it as the FilterSelect's defaultValue, and pass it to every Query that accepts that argument.",
+];
+
+/**
+ * How a generated dashboard is put together. Without these, models open every
+ * dashboard with the overview's hero and KPI strip whatever was asked, show
+ * one result in two or three cards, and pair a short card with a long one.
+ */
+export const COMPOSITION_RULES: string[] = [
+  "Answer the question asked: the first row is the answer to it (experiments → the experiment cards, restocking → the restock list). Open with the hero and KpiStrip only for overview or health questions.",
+  "Show each finding once: never put the same tool result, metric, or change in a second card, chart, title, or callout. DriverCards and VarianceWalk of one change share a row and appear nowhere else; no card beside them restates their top driver. Add a card only when it answers part of the question; 4 to 7 cards is usual.",
+  "Use one comparison throughout: pass $compare to every tool that takes it, and name that same comparison in subtitles.",
+  "Balance rows: cards in one row hold about as much as each other. A list or table of more than 6 rows takes a LargeCard, beside another long card or alone in its row; never put a few KPIs or a short chart beside it. A callout or a line of text goes inside the card it explains, never in a card of its own.",
+  'Titles name the subject or the finding in plain words ("Products running out", "Why mobile checkout fell"), never the component or chart type: no "scorecard", "bridge", "walk", "drivers", "matrix", or "KPIs".',
+];

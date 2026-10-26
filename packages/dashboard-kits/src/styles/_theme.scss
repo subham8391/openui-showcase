@@ -1,0 +1,119 @@
+/*
+ * Kit theme: the kits render in the OpenUI design system.
+ *
+ * Wrap the Renderer in <div class="kit-theme" data-mode="light|dark"> inside
+ * react-ui's ThemeProvider. Every --kit-* token below reads an --openui-*
+ * token, so surfaces, text, borders, radii, fonts, status colours, and dark
+ * mode all come from the active OpenUI theme, and the base dashboard keeps its
+ * own look. A theme override passed to ThemeProvider restyles the kits too.
+ *
+ * Chart series colours come from the theme's chart palette in JS (see
+ * useKitPalette): OpenUI's own charts distribute `defaultChartPalette` (the
+ * Ocean blue ramp by default) around its middle step, and the kit charts do
+ * the same. The static slots below are that ramp, for the few CSS-only marks.
+ *
+ * Kit styles mix colours in oklab, not oklch: OpenUI's neutrals keep a hue at
+ * zero chroma, and an oklch mix with them swings through other hues (blue
+ * mixed into the warm-white card came out green).
+ */
+
+.kit-theme {
+  color-scheme: light;
+
+  /* Surfaces and text */
+  --kit-page: var(--openui-background);
+  --kit-card: var(--openui-foreground);
+  --kit-sunk: var(--openui-sunk);
+  --kit-raised: var(--openui-elevated);
+  --kit-border: var(--openui-border-default);
+  --kit-border-strong: var(--openui-border-interactive);
+  --kit-shadow: var(--openui-shadow-s);
+  --kit-shadow-pop: var(--openui-shadow-xl);
+  --kit-ink: var(--openui-text-neutral-primary);
+  /* Secondary text at OpenUI 0.18's level: primary ink at 60% (react-ui
+     #1327 raised it from 50%, which is 3.9:1 on the card and fails AA). On
+     react-ui 0.18 this equals --openui-text-neutral-secondary; on 0.17 it keeps
+     the kit's text readable. Tertiary (20%) is too faint for text, so the
+     quietest text uses this level too. */
+  --kit-ink-2: color-mix(in oklab, var(--openui-text-neutral-primary) 60%, transparent);
+  --kit-ink-3: var(--kit-ink-2);
+
+  /* Chart scaffolding: hairline grid, a firmer baseline, gray context marks. */
+  --kit-grid: var(--openui-border-default);
+  --kit-axis: var(--openui-border-interactive);
+  --kit-muted-mark: color-mix(in oklab, var(--openui-text-neutral-tertiary) 55%, transparent);
+  --kit-spark: var(--openui-text-neutral-tertiary);
+
+  /* The brand accent, and the Ocean ramp OpenUI charts default to. The accent
+     as text leans toward ink (darker in light, lighter in dark) so it keeps
+     4.5:1 on the card and on accent tints in both modes. */
+  --kit-accent: var(--openui-interactive-accent-default);
+  --kit-accent-ink: color-mix(in oklab, var(--kit-accent) 75%, var(--kit-ink));
+  --kit-s1: #2196f3;
+  --kit-s2: #64b5f6;
+  --kit-s3: #1565c0;
+  --kit-s4: #90caf9;
+  --kit-s5: #0d47a1;
+  --kit-s6: #42a5f5;
+  --kit-s7: #1976d2;
+  --kit-s8: #bbdefb;
+  /* Ordered stages (funnels, cohorts), darkest first. */
+  --kit-o1: #0d47a1;
+  --kit-o2: #1565c0;
+  --kit-o3: #1e88e5;
+  --kit-o4: #42a5f5;
+  --kit-o5: #90caf9;
+
+  /* Money in and out: the accent, and the destructive colour. */
+  --kit-up: var(--openui-interactive-accent-default);
+  --kit-down: var(--openui-interactive-destructive-accent-default);
+  --kit-total: var(--openui-text-neutral-secondary);
+
+  /* Status, from OpenUI's semantic tokens. */
+  --kit-good: var(--openui-text-success-primary);
+  --kit-good-ink: var(--openui-text-success-primary);
+  --kit-good-bg: var(--openui-success-background);
+  --kit-bad: var(--openui-text-danger-primary);
+  --kit-bad-ink: var(--openui-text-danger-primary);
+  --kit-bad-bg: var(--openui-danger-background);
+  --kit-warn: var(--openui-text-alert-primary);
+  --kit-warn-ink: var(--openui-text-alert-primary);
+  --kit-warn-bg: var(--openui-alert-background);
+  --kit-info-ink: var(--openui-text-info-primary);
+  --kit-info-bg: var(--openui-info-background);
+  --kit-neutral-bg: var(--openui-highlight);
+
+  /* Shape and type */
+  --kit-radius: var(--openui-radius-3xl);
+  --kit-radius-sm: var(--openui-radius-m);
+  --kit-font: var(--openui-font-body);
+  --kit-font-mono: var(--openui-font-code);
+
+  background: var(--kit-page);
+  color: var(--kit-ink);
+  font-family: var(--kit-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.kit-theme[data-mode="dark"] {
+  color-scheme: dark;
+}
+
+/* The base dashboard's filter triggers reset every style (`all: unset`) and set
+   no focus ring of their own, so keyboard focus on them was invisible. */
+.kit-theme .c1-filter-single-select__trigger:focus-visible,
+.kit-theme .c1-filter-multi-select__trigger:focus-visible {
+  outline: 2px solid var(--kit-accent);
+  outline-offset: 2px;
+}
+
+/* Filters wrap on narrow screens instead of overflowing. */
+.kit-theme .c1-filter-bar,
+.kit-theme .c1-filter-bar__side {
+  flex-wrap: wrap;
+}
+
+/* Figures line up in base tables. */
+.kit-theme .c1-dashboard table {
+  font-variant-numeric: tabular-nums;
+}

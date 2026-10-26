@@ -1,0 +1,57 @@
+{
+  "name": "openui-showcase",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A website of OpenUI examples, starting with dashboard kits for e-commerce and product analytics",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter site run dev",
+    "build": "pnpm --filter site run build",
+    "build:kits": "pnpm --filter @openuidev/dashboard-kits run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r run typecheck",
+    "check": "pnpm --filter site run check",
+    "ci": "pnpm run build:kits && pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run check && pnpm --filter site exec next build"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "prettier": "^3.2.5",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@openuidev/thesys>@openuidev/react-ui": "0.17.1",
+      "@openuidev/thesys>@openuidev/react-headless": "0.17.1",
+      "postcss@<8.5.10": ">=8.5.10",
+      "uuid@<11.1.1": "^11.1.1"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@openuidev/thesys>@openuidev/react-ui": "0.17",
+        "@openuidev/thesys>@openuidev/react-headless": "0.17"
+      }
+    },
+    "onlyBuiltDependencies": [
+      "@openuidev/lang-core",
+      "esbuild",
+      "sharp"
+    ],
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher"
+    ]
+  }
+}

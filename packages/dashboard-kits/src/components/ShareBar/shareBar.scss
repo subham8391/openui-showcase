@@ -1,0 +1,140 @@
+// Part-to-whole: the total, a segmented bar, and a legend whose rows can filter the dashboard.
+
+.kit-share {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.kit-share__total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font: var(--kit-body);
+}
+.kit-share__total-value {
+  font: 600 24px/1.1 var(--kit-font);
+  letter-spacing: -0.02em;
+  color: var(--kit-ink);
+}
+.kit-share__frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  outline: none;
+  touch-action: pan-y;
+}
+.kit-share__frame--pointer {
+  cursor: pointer;
+}
+.kit-share__frame:focus-visible {
+  box-shadow: 0 0 0 2px var(--kit-accent);
+  border-radius: 6px;
+}
+.kit-share__svg {
+  display: block;
+  overflow: visible;
+}
+.kit-share__segment {
+  transition:
+    opacity 0.15s ease,
+    fill 0.2s ease;
+}
+// While a part is hovered (on the bar or in the legend), the others step back.
+.kit-share__segments--hovering .kit-share__segment:not(.kit-share__segment--active) {
+  opacity: 0.45;
+}
+.kit-share__legend--hovering li:not([data-active]) {
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kit-share__segments {
+    transform-box: view-box;
+    transform-origin: 0 0;
+    animation: kit-scale-x 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+.kit-share__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font: var(--kit-body);
+}
+.kit-share__legend li {
+  border-top: 1px solid var(--kit-border);
+  transition: opacity 0.2s ease;
+}
+.kit-share__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto 3rem;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+.kit-share__legend li:first-child {
+  border-top: 0;
+}
+.kit-share__name {
+  color: var(--kit-ink);
+}
+.kit-share__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.kit-share__pct {
+  text-align: right;
+  color: var(--kit-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-share__button {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.kit-share__button {
+  padding-inline: 6px;
+  margin-inline: -6px;
+  width: calc(100% + 12px);
+}
+
+.kit-share__button:hover,
+.kit-share__button[aria-pressed="true"] {
+  background: var(--kit-sunk);
+}
+
+.kit-share__button[aria-pressed="true"] .kit-share__name {
+  font-weight: 600;
+}
+
+.kit-share__button:focus-visible {
+  outline: 2px solid var(--kit-accent);
+  outline-offset: 1px;
+}
+
+.kit-share__legend li[data-faded] {
+  opacity: 0.5;
+}
+
+.kit-share__clear {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--kit-border);
+  border-radius: 999px;
+  background: var(--kit-card);
+  font: 500 12px var(--kit-font);
+  color: var(--kit-ink-2);
+  cursor: pointer;
+}
+
+.kit-share__clear:hover {
+  border-color: var(--kit-border-strong);
+  color: var(--kit-ink);
+}
