@@ -1,6 +1,6 @@
 import { buildSystemPrompt, toToolSpec } from "@openuidev/dashboard-kits/server";
-import { getKit } from "../../../../kits";
-import { getKitSpec } from "../../../../kits/server";
+import { getKit } from "../../../../examples/dashboard-kits/kits";
+import { getKitSpec } from "../../../../examples/dashboard-kits/kits/server";
 
 /**
  * The system prompt a kit sends to the model, for inspection in the Prompt

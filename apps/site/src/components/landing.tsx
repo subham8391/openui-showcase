@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { KITS } from "../kits";
-import { EXAMPLES, REPO_URL } from "./examples";
-import { KitPreview } from "./kit-workspace";
+import { KitPreview } from "../examples/dashboard-kits/kit-preview";
+import { KITS } from "../examples/dashboard-kits/kits";
+import { EXAMPLES, REPO_URL } from "../lib/examples";
 import { ScaledFrame } from "./scaled-frame";
 import { SiteShell } from "./site-shell";
 

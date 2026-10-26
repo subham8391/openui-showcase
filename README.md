@@ -33,17 +33,42 @@ Other scripts, all from the root:
 | `pnpm check`        | Renders every gallery dashboard in jsdom and checks every kit's tools and prompt |
 | `pnpm ci`           | All of the above, in the order CI runs them                                      |
 
+## Deploy
+
+The site deploys to [Vercel](https://vercel.com) as is, and the model key is never revealed:
+
+- **Server only.** Only `apps/site/src/lib/model.ts` reads the key. It is marked `server-only`, so the build fails if browser code ever imports it.
+- **Never sent to the browser.** There are no `NEXT_PUBLIC_` variables, the key is read at request time, and it isn't written into the build output.
+- **No leaks through errors.** On a deployment, the model service's error messages go to the server log only, since they can quote part of a key. Visitors get a plain message.
+
+Steps:
+
+1. On Vercel, import the repository and set **Root Directory** to `apps/site`. The defaults detect Next.js and pnpm, and the build compiles the kits first.
+2. Add `THESYS_API_KEY` and mark it **Sensitive**: it's encrypted and can't be read back in the dashboard. Add `THESYS_BASE_URL` only for a non-default Gateway.
+3. Deploy.
+
+Generation is open to every visitor, so anyone using the site spends the key. Set a spending limit on the key with its provider.
+
 ## Layout
 
 ```
-apps/site/                 Next.js website: landing page (/) and one page per example
-  src/app/                 routes; each example's API routes under src/app/api/<example>/
-  src/components/          site shell (theme, top bar, light/dark toggle), example cards, example views
-  src/kits/                glue between the site and the dashboard kits package
-  scripts/                 kit contract check, render smoke test, model eval
-packages/dashboard-kits/   @openuidev/dashboard-kits: the kits, their components, charts, tools, and prompts
-docs/                      design notes (docs/dashboard-kits-design.md)
-.github/workflows/ci.yml   install, build, lint, format, typecheck, test, smoke render, next build
+apps/site/                          Next.js website: landing page (/) and one page per example
+  src/app/                          routes only: pages, and each example's API routes under api/<example>/
+  src/components/                   site-wide UI: shell (theme, top bar), landing page, scaled previews
+  src/lib/                          shared by every example: model.ts (the key, server-only), examples.ts (cards)
+  src/examples/dashboard-kits/      the dashboard kits page: workspace, gallery, generate and prompt views,
+                                    the run card and viewer, kits/ (glue to the package), its styles
+  scripts/dashboard-kits/           kit contract check, render smoke test, model eval
+packages/dashboard-kits/src/        @openuidev/dashboard-kits
+  core/                             kit contract, prompt assembly, schemas, formats, stats
+  components/                       shared React components, one folder each; charts/ for the d3 charts
+  library/                          openui-lang definitions of the shared components
+  hooks/  test/                     shared hooks, test helpers
+  kits/ecommerce/  kits/analytics/  each kit: kit.ts, library.ts, tools.ts, metrics, data/ (sample data
+                                    and tool handlers by topic), components/ (one file each), its styles
+  styles/                           theme tokens and base
+docs/                               design notes (docs/dashboard-kits-design.md)
+.github/workflows/ci.yml            install, build, lint, format, typecheck, test, smoke render, next build
 ```
 
 `@openuidev/dashboard-kits` keeps its upstream name so the code stays in sync with OpenUI, but it is private here and never published. The site depends on it with `workspace:*` and consumes its built `dist/`.
@@ -51,8 +76,8 @@ docs/                      design notes (docs/dashboard-kits-design.md)
 ## Add an example
 
 1. Put reusable code in a new package under `packages/<name>` (optional; a small example can live entirely in the site).
-2. Add a page at `apps/site/src/app/<name>/page.tsx` and wrap it in `SiteShell` from `src/components/site-shell.tsx` so it gets the theme and the top bar. Put its API routes under `apps/site/src/app/api/<name>/`.
-3. Add a card entry to `EXAMPLES` in `apps/site/src/components/examples.ts`.
+2. Put the example's UI in `apps/site/src/examples/<name>/`, wrapped in `SiteShell` from `src/components/site-shell.tsx` so it gets the theme and the top bar. Add a page at `apps/site/src/app/<name>/page.tsx` that renders it, and its API routes under `apps/site/src/app/api/<name>/`. A model call goes through `src/lib/model.ts`.
+3. Add a card entry to `EXAMPLES` in `apps/site/src/lib/examples.ts`.
 4. Add the example to the table above, and any new checks to `.github/workflows/ci.yml`.
 
 ## Credits

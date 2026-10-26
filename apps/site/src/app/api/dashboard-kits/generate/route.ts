@@ -1,8 +1,8 @@
 import { buildSystemPrompt } from "@openuidev/dashboard-kits/server";
 import type { ChatCompletionChunk } from "openai/resources/chat/completions";
-import { getKit } from "../../../../kits";
-import { modelClient } from "../../../../kits/llm";
-import { getKitSpec } from "../../../../kits/server";
+import { getKit } from "../../../../examples/dashboard-kits/kits";
+import { getKitSpec } from "../../../../examples/dashboard-kits/kits/server";
+import { modelClient } from "../../../../lib/model";
 
 export const runtime = "nodejs";
 
@@ -91,16 +91,28 @@ export async function POST(request: Request) {
   );
 }
 
-/** The model API's refusal as a JSON error the Generate view can show. */
+/**
+ * The model API's refusal as a JSON error the Generate view can show. Locally
+ * it carries the API's own message; on a deployed site that message stays in
+ * the server log, since a provider's error can quote part of the key.
+ */
 function upstreamError(error: unknown) {
   const status = (error as { status?: number }).status;
   const message = error instanceof Error ? error.message : String(error);
+  const code = status && status >= 400 && status < 600 ? status : 502;
+  if (process.env.NODE_ENV === "production") {
+    console.error("Model API refused a generation:", status ?? "", message);
+    return Response.json(
+      { error: "The model service couldn't take this request right now. Try again in a minute." },
+      { status: code >= 500 ? code : 502 },
+    );
+  }
   return Response.json(
     {
       error: `The model API refused the request: ${message}${
         status ? "" : " (if this keeps happening, check the key's billing and rate limits)"
       }`,
     },
-    { status: status && status >= 400 && status < 600 ? status : 502 },
+    { status: code },
   );
 }

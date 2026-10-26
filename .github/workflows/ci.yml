@@ -28,7 +28,7 @@ jobs:
         run: pnpm run format:check
 
       # The site's typecheck builds the library and writes the kit library
-      # specs to apps/site/src/generated/, which the library's prompt-size
+      # specs to apps/site/src/examples/dashboard-kits/generated/, which the library's prompt-size
       # tests read (they skip without them).
       - name: Typecheck
         run: pnpm run typecheck

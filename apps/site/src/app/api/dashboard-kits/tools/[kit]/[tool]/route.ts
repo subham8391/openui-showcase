@@ -1,4 +1,4 @@
-import { runTool } from "../../../../../../kits/server";
+import { runTool } from "../../../../../../examples/dashboard-kits/kits/server";
 
 export async function POST(
   request: Request,

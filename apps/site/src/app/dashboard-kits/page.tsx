@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { KitWorkspace } from "../../components/kit-workspace";
+import { KitWorkspace } from "../../examples/dashboard-kits/workspace";
 
 export const metadata: Metadata = {
   title: "Dashboard kits",

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "kits:build": "pnpm --filter @openuidev/dashboard-kits run build",
-    "generate": "openui generate src/kits/ecommerce-library.ts --spec --out src/generated/ecommerce.spec.json && openui generate src/kits/analytics-library.ts --spec --out src/generated/analytics.spec.json",
+    "generate": "openui generate src/examples/dashboard-kits/kits/ecommerce-library.ts --spec --out src/examples/dashboard-kits/generated/ecommerce.spec.json && openui generate src/examples/dashboard-kits/kits/analytics-library.ts --spec --out src/examples/dashboard-kits/generated/analytics.spec.json",
     "prepare:kits": "pnpm run kits:build && pnpm run generate",
     "predev": "pnpm run prepare:kits",
     "dev": "next dev --hostname 127.0.0.1 --port 3940",
@@ -13,12 +13,12 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "precheck": "pnpm run prepare:kits",
-    "check": "tsx scripts/check-kits.ts && pnpm run smoke",
-    "smoke": "tsx scripts/smoke-kits.tsx",
+    "check": "tsx scripts/dashboard-kits/check-kits.ts && pnpm run smoke",
+    "smoke": "tsx scripts/dashboard-kits/smoke-kits.tsx",
     "pretypecheck": "pnpm run prepare:kits",
     "typecheck": "tsc --noEmit",
     "preeval": "pnpm run prepare:kits",
-    "eval": "tsx scripts/eval/run.ts"
+    "eval": "tsx --conditions=react-server scripts/dashboard-kits/eval/run.ts"
   },
   "dependencies": {
     "@openuidev/dashboard-kits": "workspace:*",
@@ -32,6 +32,7 @@
     "openai": "^6.49.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "0.0.1",
     "zod": "^4.3.6",
     "zustand": "^4.5.7"
   },
