@@ -6,12 +6,12 @@ The kits are in the `@openuidev/dashboard-kits` package (`packages/dashboard-kit
 
 A kit is everything a model needs to build dashboards for one domain, on top of the dashboard artifact's base components. Each kit has four parts:
 
-| Part          | What it is                                                                            | File                           |
-| ------------- | ------------------------------------------------------------------------------------- | ------------------------------ |
-| Components    | The kit's own components, placed into the base cards                                  | `components/`, `library.ts`    |
-| Prompt        | A preamble that names the business, definitions, rules, and worked example dashboards | `kit.ts`                       |
-| Data contract | Read-only tools with JSON Schema input and output, called with `Query()`              | `tools.ts`                     |
-| Sample data   | Tool implementations over one coherent demo business                                  | `data/`                        |
+| Part          | What it is                                                                            | File                    |
+| ------------- | ------------------------------------------------------------------------------------- | ----------------------- |
+| Components    | The kit's own components, placed into the base cards                                  | `blocks/`, `library.ts` |
+| Prompt        | A preamble that names the business, definitions, rules, and worked example dashboards | `kit.ts`                |
+| Data contract | Read-only tools with JSON Schema input and output, called with `Query()`              | `tools.ts`              |
+| Sample data   | Tool implementations over one coherent demo business                                  | `data/`                 |
 
 A kit library has three layers:
 
@@ -119,7 +119,7 @@ The galleries follow what well-regarded product dashboards do, checked against [
   - **GoalPace** shows progress toward the month's goal: a gauge of the share reached with a tick where the pace says it should be, whether the month is on pace and where it is projected to finish, what is needed per day, and the running total against the straight-line pace ([Shopify Targets][shopify-2026], [Mantine gauge][mantine-gauge]).
   - **Tracker** shows a strip of days against a target, each colored by whether it met it, with the day's figure on hover; the Merchandising dashboard uses it for orders shipped within 48 hours ([Tremor Tracker][tremor-tracker]).
   - **Breakdowns filter the dashboard.** Items carry the filter value they stand for (`key`); given the filter's `$binding`, selecting a channel in the share bar or a row in a bar list sets that filter, fades the other parts, and offers "Show all" to clear it ([PostHog][posthog-filters]).
-- **A designed dark mode.** The package's `src/styles/_theme.scss` defines every colour as a token on `.kit-theme`, with its own dark steps (not an inversion) for the page, cards, ink, the categorical slots, the ordinal funnel ramp, and status colours. The app's Light, Dark, and System switch sets the mode on the kit theme and on the base `ThemeProvider`.
+- **A designed dark mode.** The package's `src/theme/_theme.scss` defines every colour as a token on `.kit-theme`, with its own dark steps (not an inversion) for the page, cards, ink, the categorical slots, the ordinal funnel ramp, and status colours. The app's Light, Dark, and System switch sets the mode on the kit theme and on the base `ThemeProvider`.
 - **Type:** Geist for text and Geist Mono for event names and code, with tabular numbers wherever figures line up.
 
 | Token set   | Light                                                             | Dark                                                              |
@@ -132,33 +132,40 @@ The galleries follow what well-regarded product dashboards do, checked against [
 
 ```
 packages/dashboard-kits/src/
-  index.ts ecommerce.ts analytics.ts server.ts   the entry points
-  core/
-    schemas.ts              shapes shared by tools and components: KPI, trend, insight, funnel step, cohort
-    kit.ts                  KitDefinition, defineTool, toToolSpec
-    base-prompt.ts          base groups and rules missing from the published base, shared data rules
-    prompt.ts               buildSystemPrompt, runTool
-    tool-provider.ts        the Renderer's tool provider
-    sample-data.ts, format.ts
-  components/               plain React components with typed props (no openui-lang), one folder each
-    charts/                 TrendChart, ColumnChart, HeatGrid, GoalPace, Tracker, Sparkline, and the rest, all on d3
-      shared/ utils/        tooltip, legend, crosshair, d3 series geometry, spring (ported from react-ui); scales, formats
-  library/                  openui-lang definitions of the shared blocks, Pending, createKitLibrary
-  hooks/  test/             shared hooks (container size, chart hover, series focus, palette); test helpers
-  kits/
-    ecommerce/              kit.ts  library.ts  tools.ts  metrics.ts  data/ (by topic + handlers.ts)  components/
-    analytics/              the same, plus population, moments, workspaces, experiments, revenue, alerts
-  styles/                   theme tokens and shared primitives
+  index.ts ecommerce.ts analytics.ts server.ts   the public entry points
+  core/                  kit contract, prompt assembly, schemas, formats, stats, tool provider,
+                         metric definitions, and the why math (explain.ts)
+    library/             createKitLibrary, row balancing, and the list of shared definitions
+    hooks/  test/        shared hooks (container size, chart hover, series focus, palette); test helpers
+  blocks/                one folder per shared block: its React component, its openui-lang
+                         definition (<Block>.definition.tsx), styles, and tests
+    KpiStrip/ HeroMetric/ InsightList/ ConversionFunnel/ CohortGrid/ BarList/ ShareBar/ DataStatus/ …
+    KitLayer/            the page-level layer popups draw on, so cards can't clip them
+  charts/                one folder per d3 chart, the same pattern: TrendChart/ ColumnChart/ HeatGrid/
+                         GoalPace/ Tracker/ Sparkline/ ProfitWaterfall/ QuadrantChart/ SegmentFlow/ …
+    shared/ utils/       tooltip, legend, crosshair, series geometry, spring (ported from react-ui); scales
+  ecommerce/             the e-commerce kit: kit.ts (prompt and gallery), library.ts, tools.ts, metrics.ts,
+                         data/ (the sample store by topic; handlers.ts for the tools), blocks/ (one file each)
+  analytics/             the product analytics kit, the same shape, plus its tested models
+                         (population, moments, workspaces, experiments, revenue, alerts)
+  theme/                 theme tokens and base styles (index.scss compiles to dist/styles.css)
 
-apps/site/src/examples/dashboard-kits/
-  workspace.tsx             kit switch and the Gallery, Generate, and Prompt views (one file each)
-  kits/                     libraries.ts (dashboardLibrary + each kit), client.ts, server.ts
-apps/site/scripts/dashboard-kits/check-kits.ts   contract check for every kit
+apps/site/src/app/
+  layout.tsx  page.tsx   the landing page
+  _site/                 site-wide: shell (theme, top bar), landing, scaled previews,
+                         model.ts (the key, server-only), examples.ts (cards), site.css
+  dashboard-kits/        the whole dashboard kits example
+    page.tsx
+    _views/              workspace, gallery, generate (run card and viewer), prompt
+    _kits/               glue to the package, and the generated/ specs
+    _scripts/            kit contract check, render smoke test, model eval
+    api/                 generate, prompt, tools/[kit]/[tool]
+    dashboard-kits.css
 ```
 
 The package has four entry points. `@openuidev/dashboard-kits` has the shared blocks, both as openui-lang definitions and as plain React views; `/ecommerce` and `/analytics` have each kit's library factory and components; `/server` has the kit definitions, tool contracts, sample-data handlers, and prompt assembly, and imports no React. `/styles.css` is the compiled theme and component styles.
 
-The server never imports a library. `pnpm --filter site run generate` writes each library's spec to `apps/site/src/examples/dashboard-kits/generated/`, and the server builds prompts from that JSON.
+The server never imports a library. `pnpm --filter site run generate` writes each library's spec to `apps/site/src/app/dashboard-kits/_kits/generated/`, and the server builds prompts from that JSON.
 
 ## How a kit extends the base library
 
@@ -222,8 +229,8 @@ The e-commerce prompt is 63,981 characters, and the analytics prompt 63,976, aga
 ### Now: self-hosted prompt (works today)
 
 1. The server builds the system prompt with `generateSystemPrompt({ ...spec, tools, preamble, additionalRules, toolExamples })`.
-2. `/api/dashboard-kits/generate` sends it, with the user's request, to OpenUI Gateway or any OpenAI-compatible endpoint, then streams the openui-lang back.
-3. The browser renders with the same kit library. Each `Query` goes through the Renderer's `toolProvider` to `/api/dashboard-kits/tools/<kit>/<tool>`.
+2. `/dashboard-kits/api/generate` sends it, with the user's request, to OpenUI Gateway or any OpenAI-compatible endpoint, then streams the openui-lang back.
+3. The browser renders with the same kit library. Each `Query` goes through the Renderer's `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`.
 
 ### Target: OpenUI Cloud managed config
 
@@ -249,7 +256,7 @@ These are not kit bugs. Each one affects anyone who builds on the dashboard arti
 1. The published `dashboardLibrary` (0.14.0) has no component groups, so its prompt has none of the source's layout rules.
 2. The client parser accepts components in containers whose schema forbids them.
 3. `Col(label, data, "number")` renders raw, left-aligned numbers (8734327), although the base rules say number columns are right-aligned.
-4. `FilterBar` never wraps (`flex-wrap: nowrap`), so a bar with three filters makes the page 572px wide on a 375px phone. The kit theme (`src/styles/_theme.scss` in the package) adds a wrap override.
+4. `FilterBar` never wraps (`flex-wrap: nowrap`), so a bar with three filters makes the page 572px wide on a 375px phone. The kit theme (`src/theme/_theme.scss` in the package) adds a wrap override.
 5. On first render, every `Query` that reads a `$binding` fires twice with identical arguments, in development and in production; a `Query` with no bindings fires once. The Store overview makes 14 calls for 7 queries. This matches the react-lang `useOpenUIState` double fetch found in the dashboard QA.
 6. Next.js production builds break with `@openuidev/thesys` 0.14.0. SWC re-minifies the already minified bundle and emits a duplicate `let` (`Identifier 'i' has already been declared`). The server chunk then fails to prerender and the matching browser chunk fails to parse, with both Turbopack and webpack. The site sets `experimental.turbopackMinify: false`.
 7. A collapsed card, `MediumCard(children, true)`, renders as an empty 38px strip when its row wraps (seen at about 950px wide): the content is clipped and no Expand control shows. The gallery does not collapse cards.
@@ -277,11 +284,11 @@ Not in this draft: mutations (`ActionCards` approve and dismiss only write to th
 
 ## Adding a kit
 
-1. Copy `packages/dashboard-kits/src/kits/analytics` to `src/kits/<id>` and add a `src/<id>.ts` entry point (and its line in `tsdown.config.ts` and the `exports` map).
+1. Copy `packages/dashboard-kits/src/analytics` to `src/<id>` and add a `src/<id>.ts` entry point (and its line in `tsdown.config.ts` and the `exports` map).
 2. Write the tools in `tools.ts`, reusing `core/schemas.ts` shapes where they fit, then their handlers in `data/` (`data/handlers.ts` maps tool names to them).
 3. Write the components with props that reuse the tool schemas, and list their slots, plus any shared blocks, in `library.ts`. Reuse a react-ui chart where one fits; build a new one under `components/Charts` in the same shape as `TrendChart`.
 4. Write the preamble, definitions, rules, gallery dashboards, and starters in `kit.ts`, then add the kit to `KITS` and `SAMPLE_HANDLERS` in `src/server.ts`.
-5. In `apps/site`, create the library in `src/examples/dashboard-kits/kits/libraries.ts`, register it in `client.ts` and `server.ts`, add it to the `generate` script, and run `pnpm --filter site run check` (it rebuilds the package first).
+5. In `apps/site`, create the library in `src/app/dashboard-kits/_kits/libraries.ts`, register it in `client.ts` and `server.ts`, add it to the `generate` script, and run `pnpm --filter site run check` (it rebuilds the package first).
 
 [shopify-overview]: https://www.polaranalytics.com/post/shopify-analytics-guide
 [shopify-finance]: https://help.shopify.com/manual/shopify-mobile-app/reports-on-mobile/

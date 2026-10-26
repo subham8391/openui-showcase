@@ -51,13 +51,13 @@ The gallery and the Prompt view work without credentials. For Generate, put one 
 
 `OPENUI_MODEL` optionally picks the model. The defaults are `openai/gpt-5.5` on Gateway and `gpt-5.5` on OpenAI.
 
-`pnpm --filter site run eval` asks the model for a dashboard for each case in `scripts/dashboard-kits/eval/cases.ts` and scores the result offline: it parses, calls only known tools, calls the tools the question needs, and types no figures of its own. It needs the same key; results go to `eval-results/`, which git ignores.
+`pnpm --filter site run eval` asks the model for a dashboard for each case in `src/app/dashboard-kits/_scripts/eval/cases.ts` and scores the result offline: it parses, calls only known tools, calls the tools the question needs, and types no figures of its own. It needs the same key; results go to `eval-results/`, which git ignores.
 
 ## How it works
 
-1. `pnpm --filter site run generate` writes each kit library's spec to `src/examples/dashboard-kits/generated/`.
-2. `/api/dashboard-kits/generate` builds the kit's system prompt from that spec, the kit's tools, rules, and examples, and streams the model's openui-lang back.
-3. The browser renders it with the same kit library. Each `Query()` runs through the Renderer's `toolProvider` to `/api/dashboard-kits/tools/<kit>/<tool>`, which validates the arguments and the result against the tool's schemas.
+1. `pnpm --filter site run generate` writes each kit library's spec to `src/app/dashboard-kits/_kits/generated/`.
+2. `/dashboard-kits/api/generate` builds the kit's system prompt from that spec, the kit's tools, rules, and examples, and streams the model's openui-lang back.
+3. The browser renders it with the same kit library. Each `Query()` runs through the Renderer's `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`, which validates the arguments and the result against the tool's schemas.
 4. Filters are `$bindings`: changing one re-runs every Query that reads it.
 
 The base components come from `dashboardLibrary` in `@openuidev/thesys`, the library behind the dashboard artifact. `createEcommerceLibrary(dashboardLibrary)` and `createAnalyticsLibrary(dashboardLibrary)` add a kit's components and widen `MediumCard` and `LargeCard` so the prompt lists the new components as valid children.
@@ -66,24 +66,18 @@ The base components come from `dashboardLibrary` in `@openuidev/thesys`, the lib
 
 The kits, their components, charts, prompts, tools, sample data, and styles are in `packages/dashboard-kits` (its README has the layout). This app holds only the glue:
 
-| File                                              | Purpose                                                                      |
-| ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/app/`                                        | Routes only: the landing page, `dashboard-kits/`, and `api/dashboard-kits/*` |
-| `src/components/site-shell.tsx`                   | Theme, top bar, and light/dark toggle shared by every page                   |
-| `src/components/landing.tsx`                      | The landing page                                                             |
-| `src/components/scaled-frame.tsx`                 | Scaled-down live previews (landing page, run card)                           |
-| `src/lib/model.ts`                                | The model client; the only file that reads the key (`server-only`)           |
-| `src/lib/examples.ts`                             | The landing page's example cards                                             |
-| `src/app/styles.css`                              | The site's chrome, on the kit theme tokens                                   |
-| `src/examples/dashboard-kits/workspace.tsx`       | Kit switch and the Gallery, Generate, and Prompt tabs                        |
-| `src/examples/dashboard-kits/gallery-view.tsx`    | Hand-written gallery dashboards                                              |
-| `src/examples/dashboard-kits/generate-view.tsx`   | Composer, the skeleton while waiting, the run card and the full-page viewer  |
-| `src/examples/dashboard-kits/prompt-view.tsx`     | The prompt a kit sends, and its tools                                        |
-| `src/examples/dashboard-kits/run-details.tsx`     | Tool calls, renderer errors, and the program under a dashboard               |
-| `src/examples/dashboard-kits/use-kit-renderer.ts` | A kit's library and tool provider for the Renderer                           |
-| `src/examples/dashboard-kits/kits/`               | Glue to the package: libraries, spec entries, client and server helpers      |
-| `src/examples/dashboard-kits/dashboard-kits.css`  | The kits page's styles                                                       |
-| `scripts/dashboard-kits/`                         | Contract check, render smoke test, and the model eval                        |
+| File                                        | Purpose                                                                                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/layout.tsx, page.tsx`              | The root layout and the landing page                                                                                                        |
+| `src/app/_site/`                            | Site-wide: shell, landing, scaled previews, `model.ts` (the only file that reads the key, `server-only`), `examples.ts` (cards), `site.css` |
+| `src/app/dashboard-kits/page.tsx`           | The dashboard kits page                                                                                                                     |
+| `src/app/dashboard-kits/_views/`            | Kit switch and tabs (`workspace.tsx`), the gallery, Generate (composer, run card, full-page viewer), Prompt, run details                    |
+| `src/app/dashboard-kits/_kits/`             | Glue to the package: libraries, spec entries, client and server helpers, and `generated/` specs                                             |
+| `src/app/dashboard-kits/api/`               | The generate, prompt, and tools routes                                                                                                      |
+| `src/app/dashboard-kits/_scripts/`          | Contract check, render smoke test, and the model eval                                                                                       |
+| `src/app/dashboard-kits/dashboard-kits.css` | The kits page's styles                                                                                                                      |
+
+Folders that start with `_` are private to Next.js: they never become routes.
 
 ## Verify
 
@@ -103,4 +97,4 @@ pnpm --filter site run build
 
 ## Add a kit
 
-Add the kit to `packages/dashboard-kits` (copy `src/kits/analytics`, write the tools, handlers, components, and `kit.ts`, and add an entry point), then create its library in `src/examples/dashboard-kits/kits/libraries.ts` here, register it in `client.ts` and `server.ts`, and add it to the `generate` script. `pnpm --filter site run check` tells you when it is consistent. The design doc has the details.
+Add the kit to `packages/dashboard-kits` (copy `src/analytics`, write the tools, handlers, components, and `kit.ts`, and add an entry point), then create its library in `src/app/dashboard-kits/_kits/libraries.ts` here, register it in `client.ts` and `server.ts`, and add it to the `generate` script. `pnpm --filter site run check` tells you when it is consistent. The design doc has the details.

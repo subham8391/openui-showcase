@@ -37,7 +37,7 @@ Other scripts, all from the root:
 
 The site deploys to [Vercel](https://vercel.com) as is, and the model key is never revealed:
 
-- **Server only.** Only `apps/site/src/lib/model.ts` reads the key. It is marked `server-only`, so the build fails if browser code ever imports it.
+- **Server only.** Only `apps/site/src/app/_site/model.ts` reads the key. It is marked `server-only`, so the build fails if browser code ever imports it.
 - **Never sent to the browser.** There are no `NEXT_PUBLIC_` variables, the key is read at request time, and it isn't written into the build output.
 - **No leaks through errors.** On a deployment, the model service's error messages go to the server log only, since they can quote part of a key. Visitors get a plain message.
 
@@ -52,23 +52,39 @@ Generation is open to every visitor, so anyone using the site spends the key. Se
 ## Layout
 
 ```
-apps/site/                          Next.js website: landing page (/) and one page per example
-  src/app/                          routes only: pages, and each example's API routes under api/<example>/
-  src/components/                   site-wide UI: shell (theme, top bar), landing page, scaled previews
-  src/lib/                          shared by every example: model.ts (the key, server-only), examples.ts (cards)
-  src/examples/dashboard-kits/      the dashboard kits page: workspace, gallery, generate and prompt views,
-                                    the run card and viewer, kits/ (glue to the package), its styles
-  scripts/dashboard-kits/           kit contract check, render smoke test, model eval
-packages/dashboard-kits/src/        @openuidev/dashboard-kits
-  core/                             kit contract, prompt assembly, schemas, formats, stats
-  components/                       shared React components, one folder each; charts/ for the d3 charts
-  library/                          openui-lang definitions of the shared components
-  hooks/  test/                     shared hooks, test helpers
-  kits/ecommerce/  kits/analytics/  each kit: kit.ts, library.ts, tools.ts, metrics, data/ (sample data
-                                    and tool handlers by topic), components/ (one file each), its styles
-  styles/                           theme tokens and base
-docs/                               design notes (docs/dashboard-kits-design.md)
-.github/workflows/ci.yml            install, build, lint, format, typecheck, test, smoke render, next build
+apps/site/src/app/
+  layout.tsx  page.tsx   the landing page
+  _site/                 site-wide: shell (theme, top bar), landing, scaled previews,
+                         model.ts (the key, server-only), examples.ts (cards), site.css
+  dashboard-kits/        the whole dashboard kits example
+    page.tsx
+    _views/              workspace, gallery, generate (run card and viewer), prompt
+    _kits/               glue to the package, and the generated/ specs
+    _scripts/            kit contract check, render smoke test, model eval
+    api/                 generate, prompt, tools/[kit]/[tool]
+    dashboard-kits.css
+
+packages/dashboard-kits/src/
+  index.ts ecommerce.ts analytics.ts server.ts   the public entry points
+  core/                  kit contract, prompt assembly, schemas, formats, stats, tool provider,
+                         metric definitions, and the why math (explain.ts)
+    library/             createKitLibrary, row balancing, and the list of shared definitions
+    hooks/  test/        shared hooks (container size, chart hover, series focus, palette); test helpers
+  blocks/                one folder per shared block: its React component, its openui-lang
+                         definition (<Block>.definition.tsx), styles, and tests
+    KpiStrip/ HeroMetric/ InsightList/ ConversionFunnel/ CohortGrid/ BarList/ ShareBar/ DataStatus/ …
+    KitLayer/            the page-level layer popups draw on, so cards can't clip them
+  charts/                one folder per d3 chart, the same pattern: TrendChart/ ColumnChart/ HeatGrid/
+                         GoalPace/ Tracker/ Sparkline/ ProfitWaterfall/ QuadrantChart/ SegmentFlow/ …
+    shared/ utils/       tooltip, legend, crosshair, series geometry, spring (ported from react-ui); scales
+  ecommerce/             the e-commerce kit: kit.ts (prompt and gallery), library.ts, tools.ts, metrics.ts,
+                         data/ (the sample store by topic; handlers.ts for the tools), blocks/ (one file each)
+  analytics/             the product analytics kit, the same shape, plus its tested models
+                         (population, moments, workspaces, experiments, revenue, alerts)
+  theme/                 theme tokens and base styles (index.scss compiles to dist/styles.css)
+
+docs/                    design notes (docs/dashboard-kits-design.md)
+.github/workflows/ci.yml install, build, lint, format, typecheck, test, smoke render, next build
 ```
 
 `@openuidev/dashboard-kits` keeps its upstream name so the code stays in sync with OpenUI, but it is private here and never published. The site depends on it with `workspace:*` and consumes its built `dist/`.
@@ -76,8 +92,8 @@ docs/                               design notes (docs/dashboard-kits-design.md)
 ## Add an example
 
 1. Put reusable code in a new package under `packages/<name>` (optional; a small example can live entirely in the site).
-2. Put the example's UI in `apps/site/src/examples/<name>/`, wrapped in `SiteShell` from `src/components/site-shell.tsx` so it gets the theme and the top bar. Add a page at `apps/site/src/app/<name>/page.tsx` that renders it, and its API routes under `apps/site/src/app/api/<name>/`. A model call goes through `src/lib/model.ts`.
-3. Add a card entry to `EXAMPLES` in `apps/site/src/lib/examples.ts`.
+2. Create `apps/site/src/app/<name>/` with its `page.tsx`, its UI in `_views/`, and its API routes in `api/`. Wrap the page in `SiteShell` from `src/app/_site/site-shell.tsx` so it gets the theme and the top bar; a model call goes through `src/app/_site/model.ts`.
+3. Add a card entry to `EXAMPLES` in `apps/site/src/app/_site/examples.ts`.
 4. Add the example to the table above, and any new checks to `.github/workflows/ci.yml`.
 
 ## Credits

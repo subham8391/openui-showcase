@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 
 // The kit styles override the base styles above, so they load after them.
 import "@openuidev/dashboard-kits/styles.css";
-import "./styles.css";
+import "./_site/site.css";
 
 // OpenUI's typeface. The ThemeProvider's font tokens point at this variable
 // (see kit-workspace.tsx), since next/font serves Inter under its own name.
