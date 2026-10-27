@@ -81,7 +81,9 @@ export function KitWorkspace() {
         </div>
       </div>
       <p className="kit-summary">
-        {kit.tagline} <span>{kit.tools.length} data tools</span>
+        <span className="kit-summary__text">
+          {kit.tagline} <span className="kit-summary__count">{kit.tools.length} data tools</span>
+        </span>
       </p>
 
       {view === "gallery" && (

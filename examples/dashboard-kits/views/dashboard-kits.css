@@ -71,16 +71,21 @@
   font-variant-numeric: tabular-nums;
   color: var(--kit-ink-2);
 }
+/* A direct child of the page column: only the top margin, so the column's
+   centring margins stay; the text inside keeps a readable line length. */
 .kit-summary {
-  margin: -10px 0 0;
-  max-width: 78ch;
+  margin-top: -10px;
   font: 400 13.5px/1.55 var(--kit-font);
   color: var(--kit-ink-2);
 }
-.kit-summary span {
+.kit-summary__text {
+  display: block;
+  max-width: 78ch;
+}
+.kit-summary__count {
   color: var(--kit-ink-3);
 }
-.kit-summary span::before {
+.kit-summary__count::before {
   content: "· ";
 }
 
