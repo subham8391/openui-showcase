@@ -1,43 +1,34 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    /* Type Checking */
-    "allowUnreachableCode": false,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,
-    "jsx": "react-jsx",
-
-    /* Emit */
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-
-    /* Language and Environment */
-    "target": "es2022",
-
-    /* Projects */
-    "incremental": false,
-    "composite": false,
-
-    /* Modules */
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-
-    /* Language and Environment */
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-
-    /* Completeness */
+    "noEmit": true,
     "skipLibCheck": true,
-
-    /* Interop Constraints */
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
-  "ts-node": {
-    "esm": true
-  }
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
 }

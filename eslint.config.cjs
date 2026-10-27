@@ -1,6 +1,5 @@
-// The same flat config the OpenUI monorepo applies to packages/dashboard-kits.
-// Each package runs `eslint ./src` from its own directory, so the parser's
-// `project` paths resolve against that package's tsconfig files.
+// Lint for every TypeScript file in the app, with the rules the dashboard kits
+// were written to (from OpenUI's monorepo).
 const tseslint = require("@typescript-eslint/eslint-plugin");
 const typescript = require("@typescript-eslint/parser");
 const prettier = require("eslint-config-prettier");
@@ -10,14 +9,14 @@ const reactHooks = require("eslint-plugin-react-hooks");
 
 module.exports = [
   {
-    ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/src/generated/**"],
+    ignores: ["**/.next/**", "**/node_modules/**", "**/generated/**", "eval-results/**"],
   },
   {
     files: ["**/__tests__/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     languageOptions: {
       parser: typescript,
       parserOptions: {
-        project: "./tsconfig.test.json",
+        project: "./tsconfig.json",
         sourceType: "module",
       },
     },
@@ -77,6 +76,11 @@ module.exports = [
       ...eslintPluginPrettier.configs.recommended.rules,
       "react-hooks/exhaustive-deps": "warn",
     },
+  },
+  {
+    // Command-line scripts (kit check, smoke render, eval) print their results.
+    files: ["examples/*/scripts/**/*.{ts,tsx}"],
+    rules: { "no-console": "off" },
   },
   prettier,
 ];

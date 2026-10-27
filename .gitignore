@@ -1,8 +1,7 @@
 node_modules/
-dist/
 .next/
-.env*.local
-.kits/
+.env*
+!.env.example
 **/generated/
 coverage/
 .DS_Store

@@ -1,8 +1,0 @@
-node_modules/
-.next/
-.env*
-!.env.example
-src/app/*/_kits/generated/
-*.tsbuildinfo
-next-env.d.ts
-eval-results/
