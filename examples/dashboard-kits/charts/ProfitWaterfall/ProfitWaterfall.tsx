@@ -10,12 +10,13 @@ import { findBandIndex } from "../utils/mouseUtils";
 import type { ProfitWaterfallProps, WaterfallStep } from "./types";
 import {
   packWaterfall,
+  rowLabelLines,
   rowLabelMargin,
   spacedTickLabels,
   unpackWaterfall,
   varianceTone,
-  waterfallSpans,
   type WaterfallBar,
+  waterfallSpans,
 } from "./waterfallGeometry";
 
 const P = `${KIT_CHART_PREFIX}-waterfall-chart`;
@@ -276,7 +277,15 @@ function ProfitWaterfallImpl({
                 textAnchor="end"
                 className={clsx(`${P}-row-label`, s.kind === "total" && `${P}-row-label--total`)}
               >
-                {s.label}
+                {rowLabelLines(s.label, margin.left - 14).map((line, j, lines) => (
+                  <tspan
+                    key={j}
+                    x={margin.left - 10}
+                    dy={lines.length === 1 ? undefined : j === 0 ? "-0.55em" : "1.1em"}
+                  >
+                    {line}
+                  </tspan>
+                ))}
               </text>
             ))}
           <WaterfallBars

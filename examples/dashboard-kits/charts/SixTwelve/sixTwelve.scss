@@ -2,7 +2,9 @@
 
 .#{brand.$prefix}-six-twelve {
   width: 100%;
-  min-width: 300px;
+  // It measures its container, so it fits any card; a fixed minimum ran
+  // past the card on a 320px phone and cut off the last months.
+  min-width: 0;
 
   svg {
     display: block;

@@ -232,7 +232,11 @@ function TrendChartImpl({
             height={plotHeight}
             format={format}
             labels={labels}
-            xTicks={labelIndexes(n, right - left, X_LABEL_SPACING)}
+            xTicks={labelIndexes(
+              n,
+              right - left,
+              Math.max(X_LABEL_SPACING, labelWidth(labels) + 16),
+            )}
             x={at}
           />
           <TrendSeries

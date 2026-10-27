@@ -124,3 +124,17 @@ export function rowLabelMargin(stepLabels: string[], width: number): number {
     Math.max(usual, Math.ceil(longest * ROW_LABEL_CHAR) + 14),
   );
 }
+
+/**
+ * A row label as one or two lines: when it is wider than the label column
+ * (`room` px) it breaks at the space nearest its middle, so a long step name
+ * on a phone wraps instead of running off the card.
+ */
+export function rowLabelLines(label: string, room: number): string[] {
+  if (label.length * ROW_LABEL_CHAR <= room || !label.includes(" ")) return [label];
+  const mid = label.length / 2;
+  let cut = -1;
+  for (let i = 0; i < label.length; i++)
+    if (label[i] === " " && (cut < 0 || Math.abs(i - mid) < Math.abs(cut - mid))) cut = i;
+  return [label.slice(0, cut), label.slice(cut + 1)];
+}

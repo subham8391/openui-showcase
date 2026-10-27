@@ -726,6 +726,7 @@
 }
 .kit-release__metrics > div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   padding: 7px 0;
@@ -740,6 +741,8 @@
 }
 .kit-release__metrics dd {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
   align-items: baseline;
   margin: 0;

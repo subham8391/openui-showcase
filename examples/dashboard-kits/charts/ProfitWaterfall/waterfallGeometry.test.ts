@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   packWaterfall,
+  rowLabelLines,
   rowLabelMargin,
   spacedTickLabels,
   unpackWaterfall,
@@ -89,5 +90,19 @@ describe("rowLabelMargin", () => {
     const m = rowLabelMargin(["Profit before marketing"], 305);
     expect(m).toBeGreaterThan(122);
     expect(m).toBeLessThanOrEqual(153);
+  });
+});
+
+describe("rowLabelLines", () => {
+  it("keeps a label that fits on one line", () => {
+    expect(rowLabelLines("Net sales", 120)).toEqual(["Net sales"]);
+  });
+
+  it("breaks a long label at the space nearest its middle", () => {
+    expect(rowLabelLines("Profit before marketing", 111)).toEqual(["Profit before", "marketing"]);
+  });
+
+  it("leaves a single long word whole", () => {
+    expect(rowLabelLines("Fulfillment", 20)).toEqual(["Fulfillment"]);
   });
 });

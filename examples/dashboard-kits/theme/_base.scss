@@ -102,8 +102,8 @@
   gap: 6px;
   padding: 2px 9px 2px 7px;
   border-radius: 999px;
+  max-width: 100%;
   font: 500 12px/1.5 var(--kit-font);
-  white-space: nowrap;
   background: var(--kit-neutral-bg);
   color: var(--kit-ink-2);
 }
