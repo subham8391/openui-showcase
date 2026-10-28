@@ -12,6 +12,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import { useDrill } from "../../blocks/Drill";
 import { changeTone, formatChange } from "../../engine/format";
 import { useChartHover, useContainerSize, useKitPalette, useSeriesFocus } from "../../engine/hooks";
 import { ChartCrosshair, ChartLegend, ChartTooltip, type LegendGuide } from "../shared";
@@ -70,7 +71,7 @@ function TrendChartImpl({
   series: seriesProp,
   format = "number",
   variant: variantProp,
-  events = [],
+  events: eventsProp,
   target,
   band,
   partial = false,
@@ -94,6 +95,20 @@ function TrendChartImpl({
   const svgRef = useRef<SVGSVGElement>(null);
   const focus = useSeriesFocus();
   const gradientId = `${P}-g${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+
+  // Mid-stream (here or through a hero), the list or an event in it can still
+  // be null or half written: draw only the events that are whole.
+  const events = useMemo(
+    () =>
+      (Array.isArray(eventsProp) ? eventsProp : []).filter(
+        (e) =>
+          e != null &&
+          typeof e.label === "string" &&
+          typeof e.start === "string" &&
+          typeof e.end === "string",
+      ),
+    [eventsProp],
+  );
 
   const n = labels.length;
   // One value per label: a longer series is cut, a shorter one padded with
@@ -188,6 +203,8 @@ function TrendChartImpl({
   const [selection, setSelection] = useState<TrendSelection | null>(null);
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ startX: number; anchor: number; moved: boolean } | null>(null);
+  // A touch press: a tap (no travel) offers its day to dig into; a swipe scrolls.
+  const tap = useRef<{ x: number; y: number } | null>(null);
   // A different dataset (a hero switching metric, a new period) drops the selection.
   const dataKey = `${n}|${labels[0]}|${labels[n - 1]}|${format}|${series[primary]?.name}`;
   const [selectionKey, setSelectionKey] = useState(dataKey);
@@ -210,6 +227,51 @@ function TrendChartImpl({
     : null;
   const readoutChange = span ? summarizeSelection(primaryValues, span, format)?.change : undefined;
 
+  // Dig-in (see blocks/Drill): a click on a day, or Enter on the focused
+  // chart, offers questions about that day; inside a selected range, about
+  // the range. Only where the page can generate (a DrillProvider above).
+  const drill = useDrill();
+  const pointAt = (i: number) => {
+    const frame = frameNode.current!.getBoundingClientRect();
+    const v = primaryValues[i]!;
+    return { x: frame.left + at(i), y: frame.top + (Number.isFinite(v) ? y(v)! : MARGIN_TOP) };
+  };
+  const offerDay = (i: number, where: { x: number; y: number }, keyboard = false) => {
+    if (!drill || !frameNode.current) return;
+    const v = primaryValues[i]!;
+    const p = primaryValues[i - 1];
+    drill.offer(
+      {
+        kind: "point",
+        metric: series[primary]!.name,
+        label: labels[i]!,
+        value: Number.isFinite(v) ? formatValue(v, format) : undefined,
+        previous:
+          i > 0 && p != null && Number.isFinite(p)
+            ? { label: labels[i - 1]!, value: formatValue(p, format) }
+            : undefined,
+      },
+      where,
+      frameNode.current,
+      { keyboard },
+    );
+  };
+  const offerRange = (where: { x: number; y: number }, keyboard = false) => {
+    if (!drill || !frameNode.current || !readout || !span || span[0] === span[1]) return;
+    drill.offer(
+      {
+        kind: "range",
+        metric: series[primary]!.name,
+        label: readout.range,
+        value: readout.values,
+        change: readout.change,
+      },
+      where,
+      frameNode.current,
+      { keyboard },
+    );
+  };
+
   // A press anywhere outside the chart clears the selection.
   useEffect(() => {
     if (!selection) return;
@@ -225,8 +287,18 @@ function TrendChartImpl({
     if (!d) return;
     drag.current = null;
     setDragging(false);
-    // A click without a drag clears; a cancelled press leaves things as they were.
-    if (!d.moved && !cancelled) setSelection(null);
+    // A click without a drag clears (or, inside a selected range, asks about
+    // it); a cancelled press leaves things as they were. A click offers the
+    // day under it to dig into.
+    if (!d.moved && !cancelled) {
+      const where = { x: event.clientX, y: event.clientY };
+      if (drill && span && span[0] !== span[1] && d.anchor >= span[0] && d.anchor <= span[1]) {
+        offerRange(where);
+      } else {
+        setSelection(null);
+        offerDay(d.anchor, where);
+      }
+    }
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -235,7 +307,11 @@ function TrendChartImpl({
   const frameHandlers = {
     ...handlers,
     onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === "touch" || event.button !== 0) return;
+      if (event.pointerType === "touch") {
+        tap.current = { x: event.clientX, y: event.clientY };
+        return;
+      }
+      if (event.button !== 0) return;
       const [px] = pointer(event.nativeEvent, event.currentTarget);
       drag.current = { startX: px, anchor: snapToIndex(px, geometry.xs), moved: false };
       // No text selection while dragging; keep keyboard focus on the chart,
@@ -262,8 +338,22 @@ function TrendChartImpl({
           : { anchor: d.anchor, focus: focusIndex },
       );
     },
-    onPointerUp: (event: PointerEvent<HTMLDivElement>) => endDrag(event, false),
-    onPointerCancel: (event: PointerEvent<HTMLDivElement>) => endDrag(event, true),
+    onPointerUp: (event: PointerEvent<HTMLDivElement>) => {
+      const t = tap.current;
+      tap.current = null;
+      if (event.pointerType === "touch") {
+        if (t && Math.hypot(event.clientX - t.x, event.clientY - t.y) < 10) {
+          const [px] = pointer(event.nativeEvent, event.currentTarget);
+          offerDay(snapToIndex(px, geometry.xs), { x: event.clientX, y: event.clientY });
+        }
+        return;
+      }
+      endDrag(event, false);
+    },
+    onPointerCancel: (event: PointerEvent<HTMLDivElement>) => {
+      tap.current = null;
+      endDrag(event, true);
+    },
     onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.shiftKey && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
         const next = extendSelection(selection, hovered, event.key === "ArrowRight" ? 1 : -1, n);
@@ -273,6 +363,19 @@ function TrendChartImpl({
         return;
       }
       if (event.key === "Escape") setSelection(null);
+      if (drill && (event.key === "Enter" || event.key === " ")) {
+        if (span && span[0] !== span[1]) {
+          const band = frameNode.current!.getBoundingClientRect();
+          offerRange(
+            { x: band.left + (selected ? selected.x : left), y: band.top + MARGIN_TOP },
+            true,
+          );
+        } else if (hovered != null) {
+          offerDay(hovered, pointAt(hovered), true);
+        }
+        event.preventDefault();
+        return;
+      }
       handlers.onKeyDown(event);
     },
   };
@@ -330,7 +433,7 @@ function TrendChartImpl({
         }
         tabIndex={0}
         role="img"
-        aria-label={`${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read values and Shift with the arrow keys to select a range.`}
+        aria-label={`${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read values and Shift with the arrow keys to select a range.${drill ? " Press Enter to ask about the day or range." : ""}`}
         {...frameHandlers}
       >
         <svg ref={svgRef} width={width} height={plotHeight} className={`${P}-svg`}>
@@ -434,6 +537,9 @@ function TrendChartImpl({
           end={right}
           change={readoutChange}
           compare={compare}
+          onAsk={
+            drill && span && span[0] !== span[1] && !dragging ? (at) => offerRange(at) : undefined
+          }
         />
         {hovered != null && !dragging && (
           <ChartTooltip
@@ -456,6 +562,7 @@ function TrendChartImpl({
               pattern: patterns?.[i],
             }))}
             footer={gapFooter}
+            hint={drill ? "Click to ask why" : undefined}
           />
         )}
       </div>

@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { scaleBand } from "d3-scale";
-import { memo, useCallback, useMemo, useRef } from "react";
+import { pointer } from "d3-selection";
+import { memo, useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useDrill } from "../../blocks/Drill";
 import {
   useChartHover,
   useContainerSize,
@@ -80,6 +82,14 @@ function ColumnChartImpl({
   className,
 }: ColumnChartProps) {
   const [frameRef, size] = useContainerSize<HTMLDivElement>(640, height);
+  const frameNode = useRef<HTMLDivElement | null>(null);
+  const setFrame = useCallback(
+    (el: HTMLDivElement | null) => {
+      frameNode.current = el;
+      frameRef(el);
+    },
+    [frameRef],
+  );
   const focus = useSeriesFocus();
   const drawn = useMemo(() => seriesProp.slice(0, 8), [seriesProp]);
   const palette = useKitPalette(paletteCount(drawn), "barChartPalette");
@@ -146,10 +156,81 @@ function ColumnChartImpl({
 
   const findIndex = useCallback((px: number) => findBandIndex(band, px), [band]);
   const hover = useChartHover(n);
+  const handlers = hover.createHandlers(findIndex);
   const hovered = hover.hoveredIndex;
   const shown = Math.min(hover.restingIndex ?? n - 1, n - 1);
   const center = (j: number) => band(j)! + band.bandwidth() / 2;
   const baseY = y(0);
+
+  // Dig-in (see blocks/Drill): a click on a column, or Enter on the focused
+  // chart, offers questions about that column's bar: the segment or bar
+  // under the pointer in a stack or group, else the first series with a
+  // value there. Only where the page can generate (a DrillProvider above).
+  const drill = useDrill();
+  const drawnAt = (i: number, j: number) => Number.isFinite(values[i]![j]!) && values[i]![j] !== 0;
+  const seriesAt = (j: number, px?: number, py?: number) => {
+    const candidates = series.map((_, i) => i).filter((i) => drawnAt(i, j));
+    if (candidates.length === 0) return 0;
+    if (px == null || py == null || candidates.length === 1) return candidates[0]!;
+    // Grouped: the bar nearest across; stacked: the segment nearest up and down.
+    const distance = (i: number) => {
+      if (!stacked) return Math.abs(geometry.xs[i]![j]! + geometry.bar / 2 - px);
+      const a = y(spans[i]![j]!.to);
+      const b = y(spans[i]![j]!.from);
+      return py < a ? a - py : py > b ? py - b : 0;
+    };
+    return candidates.reduce((best, i) => (distance(i) < distance(best) ? i : best));
+  };
+  /** The top of series i's bar in column j, in window coordinates. */
+  const barTop = (i: number, j: number) => {
+    const frame = frameNode.current!.getBoundingClientRect();
+    const span = spans[i]![j]!;
+    return {
+      x: frame.left + (stacked ? center(j) : geometry.xs[i]![j]! + geometry.bar / 2),
+      y: frame.top + y(span.to),
+    };
+  };
+  const offerColumn = (j: number, i: number, where: { x: number; y: number }, keyboard = false) => {
+    if (!drill || !frameNode.current) return;
+    const v = values[i]![j]!;
+    const p = values[i]![j - 1];
+    drill.offer(
+      {
+        kind: "point",
+        metric: series[i]!.name,
+        label: labels[j]!,
+        value: Number.isFinite(v) ? formatValue(v, format) : undefined,
+        previous:
+          j > 0 && p != null && Number.isFinite(p)
+            ? { label: labels[j - 1]!, value: formatValue(p, format) }
+            : undefined,
+        axis: xLabel,
+      },
+      where,
+      frameNode.current,
+      { keyboard },
+    );
+  };
+  const frameHandlers = {
+    ...handlers,
+    onClick: (event: MouseEvent<HTMLDivElement>) => {
+      if (!drill) return;
+      const [px, py] = pointer(event.nativeEvent, event.currentTarget);
+      // Only over the plot: not the value labels at the left or the x labels below.
+      if (px < left || px > right || py > plotBottom) return;
+      const j = findIndex(px);
+      offerColumn(j, seriesAt(j, px, py), { x: event.clientX, y: event.clientY });
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      if (drill && hovered != null && (event.key === "Enter" || event.key === " ")) {
+        const i = seriesAt(hovered);
+        offerColumn(hovered, i, barTop(i, hovered), true);
+        event.preventDefault();
+        return;
+      }
+      handlers.onKeyDown(event);
+    },
+  };
 
   const spacing = Math.max(28, labelWidth(labels) + 14);
   const xTicks = labelIndexes(n, right - left, spacing);
@@ -167,8 +248,8 @@ function ColumnChartImpl({
         </div>
       )}
       <div
-        ref={frameRef}
-        className={clsx(`${P}-frame`, fill && `${P}-frame--fill`)}
+        ref={setFrame}
+        className={clsx(`${P}-frame`, fill && `${P}-frame--fill`, drill && `${P}-frame--drill`)}
         style={
           fill
             ? { minHeight: height, maxHeight: Number.isFinite(maxHeight) ? maxHeight : undefined }
@@ -176,8 +257,8 @@ function ColumnChartImpl({
         }
         tabIndex={0}
         role="img"
-        aria-label={`${stacked ? "Stacked" : "Grouped"} columns of ${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read each column.`}
-        {...hover.createHandlers(findIndex)}
+        aria-label={`${stacked ? "Stacked" : "Grouped"} columns of ${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read each column.${drill ? " Press Enter to ask about the column." : ""}`}
+        {...frameHandlers}
       >
         <svg width={width} height={plotHeight} className={`${P}-svg`}>
           <g className={`${P}-axes`}>
@@ -259,6 +340,7 @@ function ColumnChartImpl({
                 </>
               ) : undefined
             }
+            hint={drill ? "Click to ask why" : undefined}
           />
         )}
       </div>

@@ -3,6 +3,7 @@
 import { ScaledFrame } from "@/shared/ui/scaled-frame";
 import { Renderer } from "@openuidev/react-lang";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DrillProvider } from "../blocks/Drill";
 import { createToolProvider } from "../kits/client";
 import { RunDetails } from "./run-details";
 import { API, useKitRenderer } from "./use-kit-renderer";
@@ -46,7 +47,30 @@ function useElapsed(since: number, active: boolean) {
   return Math.max(0, (now - since) / 1000);
 }
 
-export function GenerateView({ kitId }: { kitId: string }) {
+/** A finished dashboard the viewer can step back to after digging into it. */
+interface Visited {
+  asked: string;
+  program: string;
+  model: string;
+  took: number;
+}
+
+/** The dashboard's own title, from its header. */
+function titleOf(program: string): string | undefined {
+  return /DashboardHeader\(\s*"([^"]+)"/.exec(program)?.[1];
+}
+
+export function GenerateView({
+  kitId,
+  ask,
+  onReturn,
+}: {
+  kitId: string;
+  /** A question asked from elsewhere (a gallery chart): generated as soon as it arrives. */
+  ask?: { prompt: string; id: number; from: { title: string } };
+  /** Back to where `ask` came from. */
+  onReturn?: () => void;
+}) {
   const { kit, library, toolProvider, calls, errors, onError, reset } = useKitRenderer(kitId);
   const [prompt, setPrompt] = useState("");
   const [asked, setAsked] = useState("");
@@ -60,15 +84,66 @@ export function GenerateView({ kitId }: { kitId: string }) {
   const [run, setRun] = useState(0);
   const abort = useRef<AbortController | null>(null);
   const [open, setOpen] = useState(false);
+  // The dashboards dug out of, newest last: the viewer's Back steps through them.
+  const [trail, setTrail] = useState<Visited[]>([]);
+  // The gallery dashboard the first question came from, the trail's far end.
+  const [origin, setOrigin] = useState<string | null>(null);
   // The card's thumbnail runs its own tools, so the run details count only the viewer's calls.
   const thumbTools = useMemo(() => createToolProvider(kit, { endpoint: `${API}/tools` }), [kit]);
   const opener = useRef<HTMLButtonElement>(null);
   const closer = useRef<HTMLButtonElement>(null);
   const busy = status === "waiting" || status === "writing";
   const elapsed = useElapsed(started, busy);
-  const title = /DashboardHeader\(\s*"([^"]+)"/.exec(program)?.[1];
+  const title = titleOf(program);
 
   useEffect(() => () => abort.current?.abort(), []);
+
+  // A question from a gallery chart: generate it straight into the viewer.
+  // Started a tick later, so a development double mount (whose unmount aborts
+  // the run) cancels the timer instead of the request.
+  const handled = useRef(0);
+  useEffect(() => {
+    if (!ask || handled.current === ask.id) return;
+    const timer = setTimeout(() => {
+      handled.current = ask.id;
+      setTrail([]);
+      setOrigin(ask.from.title);
+      setPrompt(ask.prompt);
+      setOpen(true);
+      void generate(ask.prompt);
+    });
+    return () => clearTimeout(timer);
+    // generate is redefined each render; only a new question should run it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask]);
+
+  /** A question from a chart in the viewer: keep this dashboard to go back to, then answer it. */
+  function dig(question: string) {
+    if (program && status === "done") {
+      setTrail((prev) => [...prev, { asked, program, model, took }]);
+    }
+    setPrompt(question);
+    setOpen(true);
+    void generate(question);
+  }
+
+  /** Back to the dashboard this one was dug out of, as it was (no new generation). */
+  function back() {
+    const last = trail[trail.length - 1];
+    if (!last) return;
+    abort.current?.abort();
+    abort.current = null;
+    reset();
+    setTrail((prev) => prev.slice(0, -1));
+    setAsked(last.asked);
+    setPrompt(last.asked);
+    setProgram(last.program);
+    setModel(last.model);
+    setTook(last.took);
+    setError("");
+    setRun((r) => r + 1);
+    setStatus("done");
+  }
 
   // Full-page viewer: Escape closes it, the page behind doesn't scroll, and
   // focus moves to its close button and back to the card's open button.
@@ -163,7 +238,11 @@ export function GenerateView({ kitId }: { kitId: string }) {
         className="composer"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!busy && prompt.trim()) void generate();
+          if (!busy && prompt.trim()) {
+            setTrail([]);
+            setOrigin(null);
+            void generate();
+          }
         }}
       >
         <label htmlFor="prompt" className="composer__label">
@@ -335,6 +414,30 @@ export function GenerateView({ kitId }: { kitId: string }) {
             hidden={!open}
           >
             <header className="viewer__bar">
+              {(() => {
+                // Back steps to the dashboard this one was dug out of, or at
+                // the trail's far end to the gallery dashboard it began on.
+                const previous = trail[trail.length - 1];
+                const to = previous
+                  ? (titleOf(previous.program) ?? "the previous dashboard")
+                  : origin && onReturn
+                    ? origin
+                    : null;
+                if (!to) return null;
+                return (
+                  <button
+                    type="button"
+                    className="viewer__back"
+                    onClick={previous ? back : onReturn}
+                    title={`Back to ${to}`}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden>
+                      <path d="M15 5l-7 7 7 7" />
+                    </svg>
+                    <span className="viewer__back-text">{to}</span>
+                  </button>
+                );
+              })()}
               <div className="viewer__heading">
                 <strong className="viewer__title">{title ?? "New dashboard"}</strong>
                 <span className="viewer__status" role="status" aria-live="polite">
@@ -407,14 +510,17 @@ export function GenerateView({ kitId }: { kitId: string }) {
               )}
               {program && (
                 <div className="canvas">
-                  <Renderer
-                    key={run}
-                    response={renderable(program, status === "writing")}
-                    library={library}
-                    isStreaming={status === "writing"}
-                    toolProvider={toolProvider}
-                    onError={onError}
-                  />
+                  {/* Charts here can be dug into once the dashboard is finished. */}
+                  <DrillProvider onAsk={dig} disabled={status !== "done"}>
+                    <Renderer
+                      key={run}
+                      response={renderable(program, status === "writing")}
+                      library={library}
+                      isStreaming={status === "writing"}
+                      toolProvider={toolProvider}
+                      onError={onError}
+                    />
+                  </DrillProvider>
                 </div>
               )}
               {program && !busy && <RunDetails program={program} calls={calls} errors={errors} />}

@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { scaleBand } from "d3-scale";
-import { useCallback, useMemo, type KeyboardEvent } from "react";
+import { pointer } from "d3-selection";
+import { useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useDrill } from "../../blocks/Drill";
 import { useChartHover, useContainerSize } from "../../engine/hooks";
 import { ChartTooltip } from "../shared";
 import { ChartEmpty } from "../shared/ChartEmpty";
@@ -53,6 +55,14 @@ function HeatGridImpl({
   className,
 }: HeatGridProps) {
   const [frameRef, size] = useContainerSize<HTMLDivElement>(640);
+  const frameNode = useRef<HTMLDivElement | null>(null);
+  const setFrame = useCallback(
+    (el: HTMLDivElement | null) => {
+      frameNode.current = el;
+      frameRef(el);
+    },
+    [frameRef],
+  );
   const cols = columns.length;
   const count = rows.length * cols;
   const width = Math.max(size.width, MIN_WIDTH);
@@ -91,7 +101,54 @@ function HeatGridImpl({
   );
   const hover = useChartHover(count);
   const handlers = hover.createHandlers(findIndex);
+
+  // Dig-in (see blocks/Drill): a click on a cell, or Enter on the focused
+  // grid, offers questions about that cell, measured in the grid's unit.
+  // Only where the page can generate (a DrillProvider above).
+  const drill = useDrill();
+  const metric = unit ? unit.charAt(0).toUpperCase() + unit.slice(1) : "Value";
+  const offerCell = (index: number, where: { x: number; y: number }, keyboard = false) => {
+    if (!drill || !frameNode.current) return;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const v = rows[row]!.values[col] ?? 0;
+    const p = col > 0 ? rows[row]!.values[col - 1] : undefined;
+    drill.offer(
+      {
+        kind: "cell",
+        metric,
+        label: `${rows[row]!.label} ${columns[col]}`,
+        value: formatValue(v, format),
+        previous:
+          p != null && Number.isFinite(p)
+            ? { label: `${rows[row]!.label} ${columns[col - 1]}`, value: formatValue(p, format) }
+            : undefined,
+      },
+      where,
+      frameNode.current,
+      { keyboard },
+    );
+  };
+  const onClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!drill) return;
+    const [px, py] = pointer(event.nativeEvent, event.currentTarget);
+    const index = findIndex(px, py);
+    if (index != null) offerCell(index, { x: event.clientX, y: event.clientY });
+  };
+
   const onKeyDown = (event: KeyboardEvent) => {
+    if (drill && hover.hoveredIndex != null && (event.key === "Enter" || event.key === " ")) {
+      // Anchored at the cell's top right, where the tooltip points.
+      const index = hover.hoveredIndex;
+      const frame = frameNode.current!.getBoundingClientRect();
+      offerCell(
+        index,
+        { x: frame.left + x(index % cols)! + cw, y: frame.top + y(Math.floor(index / cols))! },
+        true,
+      );
+      event.preventDefault();
+      return;
+    }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       const down = event.key === "ArrowDown";
       hover.setHoveredIndex((h) =>
@@ -114,14 +171,15 @@ function HeatGridImpl({
   return (
     <div className={clsx(P, className)}>
       <div
-        ref={frameRef}
-        className={`${P}-frame`}
+        ref={setFrame}
+        className={clsx(`${P}-frame`, drill && `${P}-frame--drill`)}
         style={{ height }}
         tabIndex={0}
         role="img"
-        aria-label={`${rows.length} rows by ${cols} columns, shaded by ${unit ?? "value"}. Use the arrow keys to read each cell.`}
+        aria-label={`${rows.length} rows by ${cols} columns, shaded by ${unit ?? "value"}. Use the arrow keys to read each cell.${drill ? " Press Enter to ask about the cell." : ""}`}
         {...handlers}
         onKeyDown={onKeyDown}
+        onClick={onClick}
       >
         <svg width={width} height={height} className={`${P}-svg`}>
           {rows.map((row, r) => (
@@ -207,6 +265,7 @@ function HeatGridImpl({
                 kind: "rect",
               },
             ]}
+            hint={drill ? "Click to ask why" : undefined}
           />
         )}
       </div>

@@ -1,0 +1,81 @@
+// The dig-in menu a chart opens when a point is clicked (see DrillProvider).
+
+.kit-drill {
+  // On the kit layer (see KitLayer), fixed to the window beside the click.
+  position: fixed;
+  z-index: 70;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 12px;
+  background: linear-gradient(var(--kit-raised), var(--kit-raised)), var(--kit-card);
+  border: 1px solid var(--kit-border);
+  box-shadow: var(--kit-shadow-pop);
+  font: var(--kit-body);
+  opacity: 0;
+  transform: translateY(-3px) scale(0.98);
+  transform-origin: top left;
+  transition:
+    opacity 0.14s ease,
+    transform 0.16s ease;
+
+  &[data-placed] {
+    opacity: 1;
+    transform: none;
+  }
+}
+.kit-drill__head {
+  padding: 4px 8px 6px;
+  font: var(--kit-label);
+  color: var(--kit-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.kit-drill__ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  font: 500 13px/1.35 var(--kit-font);
+  color: var(--kit-ink);
+  cursor: pointer;
+
+  svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: var(--kit-accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  &:hover,
+  &:focus-visible {
+    background: color-mix(in oklab, var(--kit-accent) 10%, transparent);
+    outline: none;
+  }
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--kit-accent);
+  }
+}
+.kit-drill__foot {
+  padding: 6px 8px 2px;
+  border-top: 1px solid var(--kit-border);
+  margin-top: 4px;
+  font: 400 11.5px/1.4 var(--kit-font);
+  color: var(--kit-ink-3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-drill {
+    transition: none;
+    transform: none;
+  }
+}

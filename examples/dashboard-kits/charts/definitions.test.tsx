@@ -47,3 +47,20 @@ describe("GoalPace with a goal missing its arrays", () => {
     expect(render(GoalPace, { goal })).toContain("kit-skel");
   });
 });
+
+describe("TrendChart with events still streaming in", () => {
+  const series = [{ name: "Sales", values: [1, 2, 3] }];
+  it.each([
+    ["a null list", null],
+    ["a null event", [null]],
+    ["an event missing its label", [{ start: "Mon", end: "Tue" }]],
+  ])("draws the chart with %s", (_, events) => {
+    const html = render(TrendChart, { labels, series, events });
+    expect(html).toContain("kit-trend-chart");
+  });
+
+  it("keeps the whole events", () => {
+    const events = [null, { label: "Promo", start: "Mon", end: "Tue", kind: "promo" }];
+    expect(render(TrendChart, { labels, series, events })).toContain("Promo");
+  });
+});

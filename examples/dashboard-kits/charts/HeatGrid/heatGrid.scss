@@ -37,6 +37,11 @@ $lift: 1.15;
     pointer-events: none;
   }
 
+  // Where the page can generate, a click on a cell asks about it (see blocks/Drill).
+  &-frame--drill &-cell {
+    cursor: pointer;
+  }
+
   &-tick--active {
     fill: var(--kit-ink);
     font-weight: 600;

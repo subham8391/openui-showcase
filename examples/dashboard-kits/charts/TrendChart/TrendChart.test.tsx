@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { act } from "react";
-import { beforeAll, describe, expect, it } from "vitest";
+import { act, createElement } from "react";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { DrillProvider } from "../../blocks/Drill";
 import { installDom, mount, runFrames } from "../../engine/test/testDom";
 import { TrendChart } from "./TrendChart";
 
@@ -180,5 +181,89 @@ describe("TrendChart range selection", () => {
       "Mon → Fri (in progress): 3.1% → 3.5% · +0.4 pts",
     );
     view.unmount();
+  });
+
+  describe("dig-in", () => {
+    /** The chart inside a page that can generate (a DrillProvider). */
+    function Asking({ onAsk }: { onAsk: (prompt: string) => void }) {
+      return createElement(DrillProvider, { onAsk, children: createElement(TrendChart, props) });
+    }
+    const menu = () => document.querySelector(".kit-drill");
+    const questions = () =>
+      [...document.querySelectorAll(".kit-drill__ask")].map((b) => b.textContent);
+    // Escape closes the menu alone; a press outside would clear the selection too.
+    const closeMenu = () =>
+      act(() => {
+        menu()!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      });
+
+    it("offers the clicked day, with the day before, and asks the picked question", () => {
+      const onAsk = vi.fn();
+      const view = mount(Asking, { onAsk });
+      const frame = frameOf(view.container);
+      // Thu, the fourth of five points.
+      pointer(frame, "pointerdown", 600);
+      pointer(frame, "pointerup", 600);
+      expect(menu()!.querySelector(".kit-drill__head")!.textContent).toBe("Thu · This period $150");
+      expect(questions()).toEqual(["Why was This period $150 on Thu?", "Break down Thu"]);
+      act(() => {
+        menu()!.querySelector("button")!.click();
+      });
+      // Wed has no value, so there is no day before to quote.
+      expect(onAsk.mock.calls[0]![0]).toMatch(/^Why was This period \$150 on Thu\? /);
+      view.unmount();
+    });
+
+    it("offers a range from a click inside it, from its readout, and from Enter", () => {
+      const view = mount(Asking, { onAsk: vi.fn() });
+      const frame = frameOf(view.container);
+      pointer(frame, "pointerdown", 0);
+      pointer(frame, "pointermove", 800);
+      pointer(frame, "pointerup", 800);
+      // Selecting doesn't open anything by itself.
+      expect(menu()).toBeNull();
+
+      pointer(frame, "pointerdown", 400);
+      pointer(frame, "pointerup", 400);
+      expect(questions()[0]).toBe("What drove This period over Mon → Fri?");
+      // The selection stays.
+      expect(readoutOf(view.container).classList).not.toContain("kit-trend-chart-readout--empty");
+      closeMenu();
+
+      act(() => {
+        readoutOf(view.container).querySelector("button")!.click();
+      });
+      expect(questions()[1]).toBe("Compare Mon → Fri with the period before");
+      closeMenu();
+
+      key(frame, "Enter");
+      expect(questions()[0]).toBe("What drove This period over Mon → Fri?");
+      view.unmount();
+    });
+
+    it("offers a tapped day on touch, but not a swipe", () => {
+      const view = mount(Asking, { onAsk: vi.fn() });
+      const frame = frameOf(view.container);
+      pointer(frame, "pointerdown", 600, "touch");
+      pointer(frame, "pointerup", 640, "touch");
+      expect(menu()).toBeNull();
+      pointer(frame, "pointerdown", 600, "touch");
+      pointer(frame, "pointerup", 603, "touch");
+      expect(questions()[1]).toBe("Break down Thu");
+      view.unmount();
+    });
+
+    it("offers nothing outside a provider: a click only clears, and no hint or button shows", () => {
+      const view = mount(TrendChart, props);
+      const frame = frameOf(view.container);
+      pointer(frame, "pointerdown", 0);
+      pointer(frame, "pointermove", 800);
+      pointer(frame, "pointerup", 800);
+      expect(readoutOf(view.container).querySelector("button")).toBeNull();
+      pointer(frame, "pointerdown", 400);
+      pointer(frame, "pointerup", 400);
+      expect(menu()).toBeNull();
+      view.unmount();
+    });
   });
 });

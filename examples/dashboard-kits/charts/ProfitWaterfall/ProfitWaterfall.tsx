@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { scaleBand, scaleLinear } from "d3-scale";
-import { memo, useCallback, useMemo, useRef } from "react";
+import { pointer } from "d3-selection";
+import { memo, useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useDrill } from "../../blocks/Drill";
 import { useChartHover, useContainerSize, useIsomorphicLayoutEffect } from "../../engine/hooks";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { FadeFollower, springPresets, useDataMorph } from "../shared/spring";
@@ -15,8 +17,8 @@ import {
   spacedTickLabels,
   unpackWaterfall,
   varianceTone,
-  type WaterfallBar,
   waterfallSpans,
+  type WaterfallBar,
 } from "./waterfallGeometry";
 
 const P = `${KIT_CHART_PREFIX}-waterfall-chart`;
@@ -63,6 +65,14 @@ function ProfitWaterfallImpl({
   className,
 }: ProfitWaterfallProps) {
   const [frameRef, size] = useContainerSize<HTMLDivElement>(640, columnHeight);
+  const frameNode = useRef<HTMLDivElement | null>(null);
+  const setFrame = useCallback(
+    (el: HTMLDivElement | null) => {
+      frameNode.current = el;
+      frameRef(el);
+    },
+    [frameRef],
+  );
   const n = steps.length;
   const rows = size.width < ROWS_BELOW;
   const fill = fillProp && !rows;
@@ -147,9 +157,67 @@ function ProfitWaterfallImpl({
     [band, rows],
   );
   const hover = useChartHover(n);
+  const handlers = hover.createHandlers(findIndex);
   const hovered = hover.hoveredIndex;
   const shown = hover.restingIndex ?? 0;
   const pad = (band.step() - band.bandwidth()) / 2;
+
+  // Dig-in (see blocks/Drill): a click on a step, or Enter on the focused
+  // chart, offers questions about that step by its own name ("Why was Web
+  // +$316?"), with the same step in the comparison when there is one. Only
+  // where the page can generate (a DrillProvider above).
+  const drill = useDrill();
+  const offerStep = (i: number, where: { x: number; y: number }, keyboard = false) => {
+    if (!drill || !frameNode.current) return;
+    const s = steps[i]!;
+    drill.offer(
+      {
+        kind: "part",
+        metric: s.label,
+        label: s.label,
+        value: signed(s, s.value, format),
+        previous:
+          s.comparison != null
+            ? { label: comparisonLabel, value: signed(s, s.comparison, format) }
+            : undefined,
+      },
+      where,
+      frameNode.current,
+      { keyboard },
+    );
+  };
+  /** The outer end of step i's bar (its top in columns, its right end in rows), in window coordinates. */
+  const barEnd = (i: number) => {
+    const frame = frameNode.current!.getBoundingClientRect();
+    const across = (band(i) ?? 0) + band.bandwidth() / 2;
+    // `to` is the larger end: the top in columns, the right end in rows.
+    const end = value(spans[i]!.to);
+    return rows
+      ? { x: frame.left + end, y: frame.top + across }
+      : { x: frame.left + across, y: frame.top + end };
+  };
+  const frameHandlers = {
+    ...handlers,
+    onClick: (event: MouseEvent<HTMLDivElement>) => {
+      if (!drill) return;
+      const [px, py] = pointer(event.nativeEvent, event.currentTarget);
+      // Only over the steps: not the value labels along the axis.
+      const along = rows ? py : px;
+      const [start, end] = band.range();
+      if (along < start || along > end || (rows ? px < margin.left : py > height - margin.bottom))
+        return;
+      const i = findIndex(px, py);
+      offerStep(i, { x: event.clientX, y: event.clientY });
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      if (drill && hovered != null && (event.key === "Enter" || event.key === " ")) {
+        offerStep(hovered, barEnd(hovered), true);
+        event.preventDefault();
+        return;
+      }
+      handlers.onKeyDown(event);
+    },
+  };
   const step = hovered != null ? steps[hovered] : undefined;
   const tone = step ? varianceTone(step.kind, step.value, step.comparison) : "neutral";
   const ticks = value.ticks(rows ? 3 : 4);
@@ -194,12 +262,13 @@ function ProfitWaterfallImpl({
               </>
             )}
             Hover a bar for its {hasComparison ? "variance" : "amount"}
+            {drill && ", click one to ask why"}
           </span>
         )}
       </div>
       <div
-        ref={frameRef}
-        className={clsx(`${P}-frame`, fill && `${P}-frame--fill`)}
+        ref={setFrame}
+        className={clsx(`${P}-frame`, fill && `${P}-frame--fill`, drill && `${P}-frame--drill`)}
         style={
           fill
             ? {
@@ -210,8 +279,8 @@ function ProfitWaterfallImpl({
         }
         tabIndex={0}
         role="img"
-        aria-label={`${steps[0]!.label} ${signed(steps[0]!, steps[0]!.value, format)} to ${steps[n - 1]!.label} ${signed(steps[n - 1]!, steps[n - 1]!.value, format)}, in ${n} steps. Use the arrow keys to read each step.`}
-        {...hover.createHandlers(findIndex)}
+        aria-label={`${steps[0]!.label} ${signed(steps[0]!, steps[0]!.value, format)} to ${steps[n - 1]!.label} ${signed(steps[n - 1]!, steps[n - 1]!.value, format)}, in ${n} steps. Use the arrow keys to read each step.${drill ? " Press Enter to ask about the step." : ""}`}
+        {...frameHandlers}
       >
         <svg width={width} height={height} className={`${P}-svg`}>
           <g className={`${P}-axis`}>

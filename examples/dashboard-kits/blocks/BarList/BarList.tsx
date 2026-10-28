@@ -1,6 +1,8 @@
+import type { MouseEvent } from "react";
 import { formatValue } from "../../charts/utils/format";
 import { formatChange, formatPercent } from "../../engine/format";
 import type { Item, ValueFormat } from "../../engine/schemas";
+import { useDrill } from "../Drill";
 
 /** The filter value that means "no selection" for the kits' dashboard filters. */
 export const ALL = "all";
@@ -26,9 +28,35 @@ const isOther = (name: string) => /^other\b/i.test(name);
 /**
  * A ranked list of labeled horizontal bars with each value and its change or
  * share. Rows can drive a dashboard filter: the chosen row stays bright and
- * the rest fade.
+ * the rest fade. Where the page can generate, the other rows ask about
+ * themselves when clicked (see blocks/Drill).
  */
 export function BarList({ items, format, limit = 8, caption, selected, onSelect }: BarListProps) {
+  // Dig-in: a row that doesn't filter is a button that offers questions
+  // about it by its own name ("Why was France $12.4K?"). A filtering row's
+  // click stays the filter. Only under a DrillProvider.
+  const drill = useDrill();
+  const ask = (item: Item, event: MouseEvent<HTMLButtonElement>) => {
+    if (!drill) return;
+    const row = event.currentTarget;
+    // Enter or Space on the row (a click with no pointer position) opens it beside the row's value.
+    const keyboard = event.detail === 0;
+    const box = (row.querySelector(".kit-barlist__value") ?? row).getBoundingClientRect();
+    drill.offer(
+      {
+        kind: "part",
+        // Names itself: a caption ("By country", "Why, by value sent back")
+        // titles the list rather than naming its measure.
+        metric: item.name,
+        label: item.name,
+        value: formatValue(item.value, format),
+        change: item.change != null ? formatChange(item.change) : undefined,
+      },
+      keyboard ? { x: box.left, y: box.top } : { x: event.clientX, y: event.clientY },
+      row,
+      { keyboard },
+    );
+  };
   const rows = [...items]
     .sort((a, b) => Number(isOther(a.name)) - Number(isOther(b.name)) || b.value - a.value)
     .slice(0, limit);
@@ -69,6 +97,17 @@ export function BarList({ items, format, limit = 8, caption, selected, onSelect 
               aria-pressed={active && item.key === selected}
               title={`Filter the dashboard to ${item.name}`}
               onClick={() => onSelect(item.key === selected ? ALL : item.key!)}
+            >
+              {content(item, i)}
+            </button>
+          </li>
+        ) : drill ? (
+          <li key={item.name}>
+            <button
+              type="button"
+              className="kit-barlist__row kit-barlist__button"
+              title={`${item.name}: ${formatValue(item.value, format)} · Click to ask why`}
+              onClick={(event) => ask(item, event)}
             >
               {content(item, i)}
             </button>

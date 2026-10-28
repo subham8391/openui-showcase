@@ -34,6 +34,7 @@ export function ChartTooltip({
   note,
   rows,
   footer,
+  hint,
 }: {
   x: number;
   y: number;
@@ -42,6 +43,8 @@ export function ChartTooltip({
   note?: string;
   rows: TooltipRow[];
   footer?: ReactNode;
+  /** A last quiet line saying what a click does ("Click to ask why"). */
+  hint?: string;
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   // Marks the chart frame the x/y are measured in.
@@ -106,6 +109,7 @@ export function ChartTooltip({
             </div>
           ))}
           {footer && <div className="kit-tooltip__footer">{footer}</div>}
+          {hint && <div className="kit-tooltip__hint">{hint}</div>}
         </div>
       </KitLayer>
     </>

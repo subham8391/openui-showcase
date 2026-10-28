@@ -21,6 +21,7 @@ export function SelectionReadout({
   end,
   change,
   compare,
+  onAsk,
 }: {
   readout: SelectionReadoutParts | null;
   /** Pixel x the readout centres on (the middle of the band). */
@@ -31,6 +32,11 @@ export function SelectionReadout({
   /** The signed change behind `readout.change`, for its tone. */
   change?: number;
   compare?: "up" | "down" | "neutral";
+  /**
+   * Offers questions about the range (see blocks/Drill), from a button at the
+   * readout's end. Mouse only: the chart's Enter key does the same.
+   */
+  onAsk?: (where: { x: number; y: number }) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -64,6 +70,21 @@ export function SelectionReadout({
               <span className={`${P}-readout-sep`}>{" · "}</span>
               <span className={`${P}-readout-part`}>{readout.total}</span>
             </>
+          )}
+          {onAsk && (
+            <button
+              type="button"
+              tabIndex={-1}
+              className={`${P}-readout-ask`}
+              // Not a drag start for the chart under it.
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                const box = event.currentTarget.getBoundingClientRect();
+                onAsk({ x: box.left - 8, y: box.bottom });
+              }}
+            >
+              Ask why
+            </button>
           )}
         </>
       )}

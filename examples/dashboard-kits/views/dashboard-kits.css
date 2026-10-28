@@ -139,6 +139,10 @@
   color: var(--kit-ink-2);
   white-space: nowrap;
 }
+.badge--accent {
+  background: color-mix(in oklab, var(--kit-accent) 12%, transparent);
+  color: var(--kit-accent-ink);
+}
 /* One row that scrolls sideways instead of wrapping into a ragged second line. */
 .chips--row {
   flex-wrap: nowrap;
@@ -490,6 +494,40 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+/* Back to the dashboard this one was dug out of. */
+.viewer__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: min(260px, 40vw);
+  height: 36px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--kit-border);
+  border-radius: 10px;
+  background: none;
+  font: 500 13px var(--kit-font);
+  color: var(--kit-ink-2);
+  cursor: pointer;
+}
+.viewer__back:hover {
+  color: var(--kit-ink);
+  border-color: var(--kit-border-strong);
+}
+.viewer__back svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.viewer__back-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .viewer__close {
   display: grid;

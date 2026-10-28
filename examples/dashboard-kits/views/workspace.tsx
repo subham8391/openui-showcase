@@ -21,6 +21,10 @@ export function KitWorkspace() {
   const [view, setView] = useState<View>("gallery");
   // The gallery dashboard a link asked for (?kit=ecommerce&dashboard=2).
   const [startAt, setStartAt] = useState(0);
+  // A question asked from a gallery chart, for the Generate view to answer.
+  const [ask, setAsk] = useState<
+    { prompt: string; id: number; from: { title: string; index: number } } | undefined
+  >();
   const kit = KITS.find((k) => k.id === kitId)!;
 
   useEffect(() => {
@@ -54,6 +58,7 @@ export function KitWorkspace() {
               onClick={() => {
                 setKitId(k.id);
                 setStartAt(0);
+                setAsk(undefined);
               }}
             >
               <svg viewBox="0 0 24 24" aria-hidden>
@@ -73,7 +78,10 @@ export function KitWorkspace() {
               role="tab"
               aria-selected={v === view}
               className="tabs__tab"
-              onClick={() => setView(v)}
+              onClick={() => {
+                setView(v);
+                setAsk(undefined);
+              }}
             >
               {{ gallery: "Gallery", generate: "Generate", prompt: "Prompt" }[v]}
             </button>
@@ -87,9 +95,29 @@ export function KitWorkspace() {
       </p>
 
       {view === "gallery" && (
-        <GalleryView key={`${kit.id}-${startAt}`} kitId={kit.id} startAt={startAt} />
+        <GalleryView
+          key={`${kit.id}-${startAt}`}
+          kitId={kit.id}
+          startAt={startAt}
+          onAsk={(prompt, from) => {
+            setAsk({ prompt, id: Date.now(), from });
+            setView("generate");
+          }}
+        />
       )}
-      {view === "generate" && <GenerateView key={kit.id} kitId={kit.id} />}
+      {view === "generate" && (
+        <GenerateView
+          key={kit.id}
+          kitId={kit.id}
+          ask={ask}
+          onReturn={() => {
+            // Back to the gallery dashboard the question was asked from.
+            if (ask) setStartAt(ask.from.index);
+            setAsk(undefined);
+            setView("gallery");
+          }}
+        />
+      )}
       {view === "prompt" && <PromptView key={kit.id} kitId={kit.id} />}
     </SiteShell>
   );

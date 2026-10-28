@@ -62,6 +62,11 @@
   border-top: 1px solid var(--kit-border);
   color: var(--kit-ink-2);
 }
+.kit-tooltip__hint {
+  margin-top: 6px;
+  font: 500 11px/1.4 var(--kit-font);
+  color: var(--kit-accent-ink);
+}
 
 @keyframes #{brand.$prefix}-tooltip-in {
   from {

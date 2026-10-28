@@ -2,10 +2,23 @@
 
 import { Renderer } from "@openuidev/react-lang";
 import { useEffect, useRef, useState } from "react";
+import { DrillProvider } from "../blocks/Drill";
 import { RunDetails } from "./run-details";
 import { useKitRenderer } from "./use-kit-renderer";
 
-export function GalleryView({ kitId, startAt = 0 }: { kitId: string; startAt?: number }) {
+export function GalleryView({
+  kitId,
+  startAt = 0,
+  onAsk,
+}: {
+  kitId: string;
+  startAt?: number;
+  /**
+   * A question about a clicked chart point, with the gallery dashboard it was
+   * asked from; the page generates a dashboard that answers it.
+   */
+  onAsk: (prompt: string, from: { title: string; index: number }) => void;
+}) {
   const { kit, library, toolProvider, calls, errors, onError, reset } = useKitRenderer(kitId);
   const [index, setIndex] = useState(startAt);
   const dashboard = kit.gallery[index];
@@ -54,18 +67,21 @@ export function GalleryView({ kitId, startAt = 0 }: { kitId: string; startAt?: n
           ))}
         </div>
         <p className="view__hint">
-          {dashboard.description} <span className="badge">Hand-written · no model needed</span>
+          {dashboard.description} <span className="badge">Hand-written · no model needed</span>{" "}
+          <span className="badge badge--accent">Click a chart point to ask why</span>
         </p>
       </div>
       <div className="canvas">
-        <Renderer
-          key={`${kitId}-${index}`}
-          response={dashboard.program}
-          library={library}
-          isStreaming={false}
-          toolProvider={toolProvider}
-          onError={onError}
-        />
+        <DrillProvider onAsk={(prompt) => onAsk(prompt, { title: dashboard.title, index })}>
+          <Renderer
+            key={`${kitId}-${index}`}
+            response={dashboard.program}
+            library={library}
+            isStreaming={false}
+            toolProvider={toolProvider}
+            onError={onError}
+          />
+        </DrillProvider>
       </div>
       <RunDetails program={dashboard.program} calls={calls} errors={errors} />
     </section>
