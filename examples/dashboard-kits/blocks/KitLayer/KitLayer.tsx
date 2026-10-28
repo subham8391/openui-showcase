@@ -74,8 +74,20 @@ export function useHoverOpen(anchor: RefObject<Element | null>, delay = 350) {
   useEffect(() => {
     const host = anchor.current?.closest(".kit-def-host") as HTMLElement | null;
     if (!host) return;
-    const show = () => {
+    const close = () => {
       clearTimeout(timer.current);
+      timer.current = undefined;
+      setOpen(false);
+    };
+    const show = (event: Event) => {
+      // A part of the host with its own reading (a KPI sparkline) keeps the
+      // popup shut, so scrubbing it doesn't cover the strip.
+      if (event.target instanceof Element && event.target.closest("[data-def-quiet]")) {
+        close();
+        return;
+      }
+      // Already opening or open: moving between children doesn't restart it.
+      if (timer.current !== undefined) return;
       setRect(host.getBoundingClientRect());
       timer.current = setTimeout(() => setOpen(true), delay);
     };
@@ -83,16 +95,15 @@ export function useHoverOpen(anchor: RefObject<Element | null>, delay = 350) {
       // Leaving the pointer while focus stays inside keeps it open, and vice versa.
       if (event.type === "mouseleave" && host.contains(document.activeElement)) return;
       if (event.type === "focusout" && host.matches(":hover")) return;
-      clearTimeout(timer.current);
-      setOpen(false);
+      close();
     };
-    host.addEventListener("mouseenter", show);
+    host.addEventListener("mouseover", show);
     host.addEventListener("focusin", show);
     host.addEventListener("mouseleave", hide);
     host.addEventListener("focusout", hide);
     return () => {
       clearTimeout(timer.current);
-      host.removeEventListener("mouseenter", show);
+      host.removeEventListener("mouseover", show);
       host.removeEventListener("focusin", show);
       host.removeEventListener("mouseleave", hide);
       host.removeEventListener("focusout", hide);

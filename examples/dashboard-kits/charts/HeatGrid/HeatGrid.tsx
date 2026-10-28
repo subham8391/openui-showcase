@@ -15,6 +15,8 @@ const P = `${KIT_CHART_PREFIX}-heat-grid`;
 const MARGIN_BOTTOM = 20;
 const GAP = 2;
 const MIN_WIDTH = 240;
+/** How much the hovered cell grows about its centre; kept in step with heatGrid.scss. */
+const LIFT = 1.15;
 
 /** A shade step as a fill: the accent mixed into the card, so both themes recede at the low end. */
 const shade = (step: number) =>
@@ -25,9 +27,12 @@ const shade = (step: number) =>
 /**
  * Rows by columns of cells (weekday by hour) on two d3 band scales, shaded in
  * one hue from the card color to the accent, quantized to the steps the legend
- * names. Hovering a cell rings it — the ring glides between cells on the kit's
- * crosshair spring — bolds its row and column labels, and reads out its value
- * and share of the busiest cell in the shared tooltip. Arrow keys walk the
+ * names. Hovering a cell lifts it — it grows a little about its centre while
+ * the other cells step back — and rings it (the ring glides between cells on
+ * the kit's crosshair spring), bolds its row and column labels, and reads out
+ * its value and share of the busiest cell in the shared tooltip. The lift is a
+ * transform, so nothing around it moves; a copy drawn over the grid keeps the
+ * grown cell above its neighbours. Arrow keys walk the
  * grid in all four directions. Shades ease to new values when a filter changes.
  */
 export function HeatGrid(props: HeatGridProps) {
@@ -141,17 +146,36 @@ function HeatGridImpl({
                 height={Math.max(1, ch)}
                 rx={Math.min(3, cw / 4)}
                 fill={shade(heatStep(row.values[c] ?? 0, max))}
-                className={clsx(`${P}-cell`, isAnimationActive && `${P}-cell--animated`)}
+                className={clsx(
+                  `${P}-cell`,
+                  hovered === r * cols + c && `${P}-cell--active`,
+                  hovered != null && hovered !== r * cols + c && `${P}-cell--dimmed`,
+                  isAnimationActive && `${P}-cell--animated`,
+                )}
                 style={isAnimationActive ? { animationDelay: `${c * stagger}ms` } : undefined}
               />
             )),
           )}
+          {active && (
+            // Keyed by cell, so each newly hovered cell grows in from its slot.
+            <rect
+              key={hovered}
+              x={x(active.col)!}
+              y={y(active.row)!}
+              width={Math.max(1, cw)}
+              height={Math.max(1, ch)}
+              rx={Math.min(3, cw / 4)}
+              fill={shade(heatStep(value, max))}
+              className={`${P}-lift`}
+              aria-hidden
+            />
+          )}
           <FadeFollower x={x(at.col)!} y={y(at.row)!} visible={active != null}>
             <rect
-              x={-1.5}
-              y={-1.5}
-              width={cw + 3}
-              height={ch + 3}
+              x={-(cw * (LIFT - 1)) / 2 - 1.5}
+              y={-(ch * (LIFT - 1)) / 2 - 1.5}
+              width={cw * LIFT + 3}
+              height={ch * LIFT + 3}
               rx={Math.min(4, cw / 3)}
               className={`${P}-ring`}
             />

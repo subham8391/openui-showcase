@@ -1,6 +1,17 @@
 import clsx from "clsx";
 import { scalePoint } from "d3-scale";
-import { useCallback, useId, useMemo, useRef, type ReactNode } from "react";
+import { pointer } from "d3-selection";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { changeTone, formatChange } from "../../engine/format";
 import { useChartHover, useContainerSize, useKitPalette, useSeriesFocus } from "../../engine/hooks";
 import { ChartCrosshair, ChartLegend, ChartTooltip, type LegendGuide } from "../shared";
@@ -12,9 +23,21 @@ import { formatAxis, formatValue } from "../utils/format";
 import { findNearestDataIndex } from "../utils/mouseUtils";
 import { fitsWithoutZero, labelIndexes, labelWidth, valueScale } from "../utils/scale";
 import { EventBands, eventAt } from "./parts/EventBands";
+import { SelectionBand } from "./parts/SelectionBand";
+import { SelectionAnnouncer, SelectionReadout } from "./parts/SelectionReadout";
 import { TrendAxes } from "./parts/TrendAxes";
 import { TrendSeries, type GapTone } from "./parts/TrendSeries";
 import { packTrend } from "./trendGeometry";
+import {
+  extendSelection,
+  isDrag,
+  selectionBand,
+  selectionReadout,
+  selectionSpan,
+  snapToIndex,
+  summarizeSelection,
+  type TrendSelection,
+} from "./trendSelection";
 import type { TrendChartProps, TrendCompareDirection } from "./types";
 
 const P = `${KIT_CHART_PREFIX}-trend-chart`;
@@ -60,6 +83,14 @@ function TrendChartImpl({
   className,
 }: TrendChartProps) {
   const [frameRef, size] = useContainerSize<HTMLDivElement>(640, height);
+  const frameNode = useRef<HTMLDivElement | null>(null);
+  const setFrame = useCallback(
+    (el: HTMLDivElement | null) => {
+      frameNode.current = el;
+      frameRef(el);
+    },
+    [frameRef],
+  );
   const svgRef = useRef<SVGSVGElement>(null);
   const focus = useSeriesFocus();
   const gradientId = `${P}-g${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -129,7 +160,7 @@ function TrendChartImpl({
     const xs = Float64Array.from({ length: n }, (_, i) => x(i)!);
     const ys = series.map((s) => Float64Array.from(s.values, (v) => y(v)));
     const flat = packTrend(xs, ys, [y(target?.value ?? 0), y(band?.from ?? 0), y(band?.to ?? 0)]);
-    return { x, y, ticks, left, right, flat };
+    return { x, y, ticks, left, right, flat, xs };
   }, [
     series,
     variant,
@@ -149,6 +180,102 @@ function TrendChartImpl({
   const hover = useChartHover(n);
   const handlers = hover.createHandlers(findIndex);
   const hovered = hover.hoveredIndex;
+  const { setHoveredIndex } = hover;
+
+  // Range selection (see trendSelection.ts). A mouse or pen press-and-drag
+  // selects; touch never starts one, so a swipe over the chart still scrolls
+  // the page (Shift+arrows select from the keyboard).
+  const [selection, setSelection] = useState<TrendSelection | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ startX: number; anchor: number; moved: boolean } | null>(null);
+  // A different dataset (a hero switching metric, a new period) drops the selection.
+  const dataKey = `${n}|${labels[0]}|${labels[n - 1]}|${format}|${series[primary]?.name}`;
+  const [selectionKey, setSelectionKey] = useState(dataKey);
+  if (selectionKey !== dataKey) {
+    setSelectionKey(dataKey);
+    setSelection(null);
+  }
+  const span = selection ? selectionSpan(selection, n) : null;
+  const selected = span ? selectionBand(span, geometry.xs) : null;
+  const tail = partial && n > 2;
+  const primaryValues = series[primary]!.values;
+  const readout = span
+    ? selectionReadout(
+        primaryValues,
+        labels,
+        span,
+        format,
+        tail ? { index: n - 1, note: "in progress" } : undefined,
+      )
+    : null;
+  const readoutChange = span ? summarizeSelection(primaryValues, span, format)?.change : undefined;
+
+  // A press anywhere outside the chart clears the selection.
+  useEffect(() => {
+    if (!selection) return;
+    const onDown = (event: globalThis.PointerEvent) => {
+      if (!frameNode.current?.contains(event.target as Node)) setSelection(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [selection]);
+
+  const endDrag = (event: PointerEvent<HTMLDivElement>, cancelled: boolean) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    setDragging(false);
+    // A click without a drag clears; a cancelled press leaves things as they were.
+    if (!d.moved && !cancelled) setSelection(null);
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const frameHandlers = {
+    ...handlers,
+    onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch" || event.button !== 0) return;
+      const [px] = pointer(event.nativeEvent, event.currentTarget);
+      drag.current = { startX: px, anchor: snapToIndex(px, geometry.xs), moved: false };
+      // No text selection while dragging; keep keyboard focus on the chart,
+      // without the keyboard ring a mouse user didn't ask for (focusVisible
+      // isn't in TypeScript's DOM types yet).
+      event.preventDefault();
+      event.currentTarget.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    },
+    onPointerMove: (event: PointerEvent<HTMLDivElement>) => {
+      handlers.onPointerMove(event);
+      const d = drag.current;
+      if (!d) return;
+      const [px] = pointer(event.nativeEvent, event.currentTarget);
+      if (!d.moved && !isDrag(d.startX, px)) return;
+      if (!d.moved) {
+        d.moved = true;
+        setDragging(true);
+      }
+      const focusIndex = snapToIndex(px, geometry.xs);
+      setSelection((prev) =>
+        prev && prev.anchor === d.anchor && prev.focus === focusIndex
+          ? prev
+          : { anchor: d.anchor, focus: focusIndex },
+      );
+    },
+    onPointerUp: (event: PointerEvent<HTMLDivElement>) => endDrag(event, false),
+    onPointerCancel: (event: PointerEvent<HTMLDivElement>) => endDrag(event, true),
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.shiftKey && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
+        const next = extendSelection(selection, hovered, event.key === "ArrowRight" ? 1 : -1, n);
+        setSelection(next);
+        setHoveredIndex(next.focus);
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "Escape") setSelection(null);
+      handlers.onKeyDown(event);
+    },
+  };
   // The crosshair stays mounted and rests where it was last shown, so it fades
   // out in place and glides in from there on the next hover.
   const shown = Math.min(hover.restingIndex ?? n - 1, n - 1);
@@ -158,8 +285,6 @@ function TrendChartImpl({
     ...(band ? [{ name: band.label, kind: "band" as const }] : []),
     ...(target ? [{ name: target.label, kind: "target" as const }] : []),
   ];
-  const tail = partial && n > 2;
-
   let gapFooter: ReactNode;
   if (hovered != null && tones) {
     const c = series[primary]!.values[hovered]!;
@@ -192,8 +317,12 @@ function TrendChartImpl({
         />
       )}
       <div
-        ref={frameRef}
-        className={clsx(`${P}-frame`, fill && `${P}-frame--fill`)}
+        ref={setFrame}
+        className={clsx(
+          `${P}-frame`,
+          fill && `${P}-frame--fill`,
+          dragging && `${P}-frame--selecting`,
+        )}
         style={
           fill
             ? { minHeight: height, maxHeight: Number.isFinite(maxHeight) ? maxHeight : undefined }
@@ -201,8 +330,8 @@ function TrendChartImpl({
         }
         tabIndex={0}
         role="img"
-        aria-label={`${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read values.`}
-        {...handlers}
+        aria-label={`${series.map((s) => s.name).join(", ")} from ${labels[0]} to ${labels[n - 1]}. Use the arrow keys to read values and Shift with the arrow keys to select a range.`}
+        {...frameHandlers}
       >
         <svg ref={svgRef} width={width} height={plotHeight} className={`${P}-svg`}>
           <defs>
@@ -223,6 +352,13 @@ function TrendChartImpl({
             height={plotBottom - MARGIN_TOP}
             halfStep={x.step() / 2 || 8}
             active={hoveredEvent}
+          />
+          <SelectionBand
+            x0={selected?.x ?? 0}
+            x1={(selected?.x ?? 0) + (selected?.width ?? 0)}
+            visible={selected != null}
+            top={MARGIN_TOP}
+            bottom={plotBottom}
           />
           <TrendAxes
             ticks={geometry.ticks}
@@ -278,7 +414,7 @@ function TrendChartImpl({
           <ChartCrosshair
             classPrefix={P}
             x={at(shown)}
-            visible={hovered != null}
+            visible={hovered != null && !dragging}
             top={MARGIN_TOP}
             bottom={plotBottom}
             dots={series.map((s, i) => ({
@@ -291,7 +427,15 @@ function TrendChartImpl({
             }))}
           />
         </svg>
-        {hovered != null && (
+        <SelectionReadout
+          readout={readout}
+          center={selected ? selected.x + selected.width / 2 : 0}
+          start={left}
+          end={right}
+          change={readoutChange}
+          compare={compare}
+        />
+        {hovered != null && !dragging && (
           <ChartTooltip
             x={at(hovered)}
             y={MARGIN_TOP}
@@ -315,6 +459,8 @@ function TrendChartImpl({
           />
         )}
       </div>
+      {/* Announced on release and on each Shift+arrow, not on every point a drag crosses. */}
+      <SelectionAnnouncer text={dragging ? "" : (readout?.text ?? "")} />
     </div>
   );
 }

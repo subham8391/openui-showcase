@@ -63,7 +63,7 @@ describe("DefinitionTip", () => {
 
     const host = container.querySelector(".kit-def-host")!;
     act(() => {
-      host.dispatchEvent(new MouseEvent("mouseenter"));
+      host.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
     });
     act(() => {
       vi.advanceTimersByTime(400);
@@ -73,6 +73,47 @@ describe("DefinitionTip", () => {
     act(() => {
       host.dispatchEvent(new MouseEvent("mouseleave"));
     });
+    expect(tip.hasAttribute("data-open")).toBe(false);
+    unmount();
+  });
+
+  it("stays shut over a part marked data-def-quiet", () => {
+    vi.useFakeTimers();
+    function Tile() {
+      return createElement(
+        "div",
+        { className: "kit-def-host" },
+        createElement("span", { className: "label" }, "Orders"),
+        createElement("div", { className: "spark", "data-def-quiet": "" }),
+        createElement(DefinitionTip, {
+          id: "def-quiet",
+          definition: { formula: "Orders placed", window: "Selected period" },
+        }),
+      );
+    }
+    const { container, unmount } = mount(Tile, {});
+    const tip = document.getElementById("def-quiet")!;
+    const over = (selector: string) =>
+      act(() => {
+        container
+          .querySelector(selector)!
+          .dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      });
+
+    over(".spark");
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(tip.hasAttribute("data-open")).toBe(false);
+
+    over(".label");
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(tip.hasAttribute("data-open")).toBe(true);
+
+    // Moving onto the sparkline closes it again.
+    over(".spark");
     expect(tip.hasAttribute("data-open")).toBe(false);
     unmount();
   });

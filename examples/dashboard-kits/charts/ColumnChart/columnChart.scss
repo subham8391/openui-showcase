@@ -25,19 +25,6 @@
     fill: var(--kit-sunk);
   }
 
-  &-series {
-    transition: opacity 0.2s ease;
-  }
-
-  &-col {
-    transition: opacity 0.15s ease;
-  }
-
-  // While a column is hovered, the others step back.
-  &-bars--hovering &-col:not(&-col--active) {
-    opacity: 0.5;
-  }
-
   &-xlabel {
     font: var(--kit-label);
     color: var(--kit-ink-3);
@@ -46,6 +33,12 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  // The hover and legend fades (each bar's inline opacity) ease; with reduced
+  // motion they switch at once.
+  .#{brand.$prefix}-column-chart-col {
+    transition: opacity 0.15s ease;
+  }
+
   // Columns rise from the baseline (each path's transform-origin), staggered.
   .#{brand.$prefix}-column-chart-col--animated {
     transform-box: view-box;

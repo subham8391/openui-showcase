@@ -2,10 +2,29 @@
 @use "../shared/chartBase" as base;
 
 @include base.series-entrance("sparkline");
+@include base.crosshair("sparkline");
 
 .#{brand.$prefix}-sparkline {
+  position: relative;
   width: 100%;
   min-width: 0;
+
+  &-frame {
+    width: 100%;
+    min-width: 0;
+    outline: none;
+
+    // The whole box is the hit area; vertical swipes still scroll the page.
+    &--interactive {
+      touch-action: pan-y;
+      cursor: crosshair;
+    }
+
+    &--interactive:focus-visible {
+      box-shadow: 0 0 0 2px var(--kit-accent);
+      border-radius: 4px;
+    }
+  }
 
   &-svg {
     display: block;
@@ -22,5 +41,59 @@
   &-dot {
     stroke: var(--kit-card);
     stroke-width: 1.5;
+  }
+
+  &-end {
+    transition: opacity 0.12s ease;
+  }
+
+  &-end--away {
+    opacity: 0;
+  }
+
+  // Bars: muted, the latest in the accent, negatives in the "money out" colour.
+  &-bar {
+    fill: var(--kit-spark);
+    transition: opacity 0.12s ease;
+
+    &--latest {
+      fill: var(--kit-accent);
+    }
+
+    &--down {
+      fill: var(--kit-down);
+    }
+
+    // The bar being read takes the accent (a negative keeps its own colour).
+    &--active:not(.#{brand.$prefix}-sparkline-bar--down) {
+      fill: var(--kit-accent);
+    }
+  }
+
+  // While a bar is read, the others step back.
+  &-bars--hovering > &-bar:not(.#{brand.$prefix}-sparkline-bar--active) {
+    opacity: 0.35;
+  }
+
+  &-zero {
+    stroke: var(--kit-axis);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+  // Smaller than a full chart's hover dot, to suit a 36px line.
+  &-active-dot-outer {
+    transform: scale(0.75);
+  }
+
+  &-active-dot-inner {
+    transform: scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .#{brand.$prefix}-sparkline-end,
+  .#{brand.$prefix}-sparkline-bar {
+    transition: none;
   }
 }

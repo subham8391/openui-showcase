@@ -32,6 +32,12 @@ const MIN_WIDTH = 240;
 /** Widest a stacked column, or one bar of a group, is drawn. */
 const MAX_BAR = 28;
 const RADIUS = 4;
+/**
+ * How far the other columns step back while one is hovered. It floors with the
+ * legend's series fade rather than multiplying, so a pinned series and a
+ * hovered column together never fade a bar below the series fade.
+ */
+const BAND_DIM_OPACITY = 0.35;
 
 type Round = "top" | "bottom" | "none";
 
@@ -278,7 +284,9 @@ interface BarsProps {
 /**
  * Every column segment, driven by one spring data morph over the flat pixel
  * vector. The paths are rebuilt from the animated tops and bottoms each frame;
- * a hover re-render only toggles classes.
+ * a hover re-render only toggles classes and opacities. Each bar's opacity is
+ * the lower of its series fade (legend focus) and its band fade (another
+ * column hovered), so the hovered column keeps its series' own opacity.
  */
 const ColumnBars = memo(function ColumnBars(props: BarsProps) {
   const n = props.xs[0]?.length ?? 0;
@@ -310,9 +318,12 @@ const ColumnBars = memo(function ColumnBars(props: BarsProps) {
   return (
     <g className={clsx(`${P}-bars`, props.hovered != null && `${P}-bars--hovering`)}>
       {props.xs.map((row, i) => (
-        <g key={i} className={`${P}-series`} style={{ opacity: props.opacities[i] }}>
+        <g key={i} className={`${P}-series`}>
           {row.map((x, j) => {
             const o = (i * n + j) * 2;
+            const dimmed = props.hovered != null && j !== props.hovered;
+            const series = props.opacities[i] ?? 1;
+            const opacity = dimmed ? Math.min(series, BAND_DIM_OPACITY) : series;
             return (
               <path
                 key={j}
@@ -331,12 +342,17 @@ const ColumnBars = memo(function ColumnBars(props: BarsProps) {
                 className={clsx(
                   `${P}-col`,
                   j === props.hovered && `${P}-col--active`,
+                  dimmed && `${P}-col--dimmed`,
                   animate && `${P}-col--animated`,
                 )}
                 style={
                   animate
-                    ? { transformOrigin: `0 ${props.baseY}px`, animationDelay: `${j * stagger}ms` }
-                    : undefined
+                    ? {
+                        opacity,
+                        transformOrigin: `0 ${props.baseY}px`,
+                        animationDelay: `${j * stagger}ms`,
+                      }
+                    : { opacity }
                 }
               />
             );

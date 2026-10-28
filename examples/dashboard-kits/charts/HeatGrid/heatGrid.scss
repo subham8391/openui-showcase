@@ -1,8 +1,11 @@
 @use "../prefix" as brand;
 @use "../shared/chartBase" as base;
 
-// Rows by columns of shaded cells, a ring that follows the hovered cell, and
-// a stepped legend under the grid.
+// Rows by columns of shaded cells, a hovered cell that lifts while the others
+// step back, a ring that follows it, and a stepped legend under the grid.
+
+// The hovered cell's growth about its centre; LIFT in HeatGrid.tsx matches it.
+$lift: 1.15;
 
 @include base.chart-frame("heat-grid");
 @include base.plot-axes("heat-grid");
@@ -10,8 +13,28 @@
 .#{brand.$prefix}-heat-grid {
   gap: 10px;
 
+  &-cell,
+  &-lift {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
   &-cell {
     transition: fill 0.35s ease;
+  }
+
+  // fill-opacity, not opacity: the entrance fade holds opacity at 1.
+  &-cell--dimmed {
+    fill-opacity: 0.45;
+  }
+
+  &-cell--active,
+  &-lift {
+    transform: scale($lift);
+  }
+
+  &-lift {
+    pointer-events: none;
   }
 
   &-tick--active {
@@ -50,7 +73,26 @@
   }
 }
 
+@keyframes #{brand.$prefix}-heat-lift {
+  from {
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  // The lift and the step back ease in and out; with reduced motion they
+  // switch at once.
+  .#{brand.$prefix}-heat-grid-cell {
+    transition:
+      fill 0.35s ease,
+      fill-opacity 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .#{brand.$prefix}-heat-grid-lift {
+    animation: #{brand.$prefix}-heat-lift 0.15s ease-out;
+  }
+
   .#{brand.$prefix}-heat-grid-cell--animated {
     opacity: 0;
     animation: #{brand.$prefix}-fade-appear 0.4s ease-out forwards;

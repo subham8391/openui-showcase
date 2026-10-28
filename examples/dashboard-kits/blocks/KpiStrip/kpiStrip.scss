@@ -64,19 +64,13 @@
   color: var(--kit-ink-3);
 }
 
-/* With a shared $binding, each tile is a button that shows its metric in the
-   hero chart; the selected one carries an accent bar along its top edge. */
+/* With a shared $binding, each tile is a tab that shows its metric in the
+   hero chart; the selected one carries an accent bar along its top edge. The
+   tile's label is the button, its hit area stretched over the whole tile, so
+   the sparkline (raised above it) stays a focus stop of its own. */
 .kit-kpi--tab {
   position: relative;
-  margin: 0;
-  border-top: 0;
-  border-right: 0;
-  border-bottom: 0;
   border-radius: 10px;
-  background: none;
-  text-align: left;
-  font: inherit;
-  color: inherit;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -98,18 +92,71 @@
 .kit-kpis__cell:first-child > .kit-kpi--tab::before {
   left: 4px;
 }
-.kit-kpi--tab[aria-pressed="true"] {
+.kit-kpi__select {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+.kit-kpi__select::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.kit-kpi--selected {
   background: color-mix(in oklab, var(--kit-accent) 7%, var(--kit-card));
 }
-.kit-kpi--tab[aria-pressed="true"]::before {
+.kit-kpi--selected::before {
   transform: scaleX(1);
 }
-.kit-kpi--tab[aria-pressed="true"] .kit-kpi__label {
+.kit-kpi--selected .kit-kpi__label {
   color: var(--kit-accent-ink);
 }
-.kit-kpi--tab:focus-visible {
+.kit-kpi--tab:has(.kit-kpi__select:focus-visible) {
   outline: 2px solid var(--kit-accent);
   outline-offset: -2px;
+}
+.kit-kpi--tab .kit-kpi__select::after {
+  z-index: 1;
+  border-radius: 10px;
+}
+
+/* The sparkline reads days; it sits above a tab's stretched button, which in
+   turn sits above the hint (positioned for its date). */
+.kit-kpi__spark {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+
+/* While a sparkline is read, the tiles show the hovered day: the value rolls
+   quickly, the date takes the hint's place (the hint keeps its room), and a
+   day with no comparison keeps the change line's height. */
+.kit-kpis--reading .kit-roll__strip {
+  transition-duration: 0.2s;
+}
+.kit-kpi__hint {
+  position: relative;
+}
+.kit-kpi__hint--dated {
+  min-height: 1.4em;
+}
+.kit-kpi__hidden,
+.kit-kpi__hold {
+  visibility: hidden;
+}
+.kit-kpi__date {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-weight: 600;
+  color: var(--kit-ink-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
@@ -120,6 +167,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .kit-kpi--tab::before {
+    transition: none;
+  }
+  .kit-kpis--reading .kit-roll__strip {
     transition: none;
   }
 }

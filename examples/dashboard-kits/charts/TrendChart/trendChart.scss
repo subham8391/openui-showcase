@@ -131,4 +131,60 @@
     fill: var(--kit-ink-3);
     font-style: italic;
   }
+
+  // A selected range (drag, or Shift+arrows): a quiet accent band with a line
+  // at each edge, under the series, and its readout pinned at the plot's top.
+  &-selection-band {
+    fill: color-mix(in oklab, var(--kit-accent) 10%, transparent);
+  }
+
+  &-selection-edge {
+    stroke: color-mix(in oklab, var(--kit-accent) 70%, transparent);
+    stroke-width: 1.25;
+  }
+
+  &-frame--selecting {
+    cursor: ew-resize;
+    user-select: none;
+  }
+
+  &-readout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: max-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 3px 8px;
+    border-radius: var(--kit-radius-sm);
+    // The tooltip's surface: the elevated tint laid over the solid card, so
+    // lines under the readout never show through it in dark mode.
+    background: linear-gradient(var(--kit-raised), var(--kit-raised)), var(--kit-card);
+    border: 1px solid color-mix(in oklab, var(--kit-accent) 35%, var(--kit-border));
+    box-shadow: var(--kit-shadow);
+    font: 500 12px/1.4 var(--kit-font);
+    color: var(--kit-ink);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+
+    strong {
+      font-weight: 600;
+    }
+
+    &--empty {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  &-readout-part {
+    white-space: nowrap;
+  }
+
+  &-readout-range,
+  &-readout-sep {
+    color: var(--kit-ink-2);
+  }
 }
