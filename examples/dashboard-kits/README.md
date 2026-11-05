@@ -49,23 +49,23 @@ pnpm dev
 
 `pnpm dev` writes the kit library specs and starts Next.js on http://127.0.0.1:3940. Edits to the kits hot-reload like any other code.
 
-The gallery and the Prompt view work without credentials. For Generate, put one key in `.env.local`:
+The gallery and the Prompt view work without credentials. Generate runs on [OpenUI Dashboards](https://www.openui.com/docs/dashboards) and needs a key in `.env.local`:
 
-- `THESYS_API_KEY`: an inference key from the [Thesys Console](https://console.thesys.dev/keys), sent to OpenUI Gateway (`THESYS_BASE_URL` overrides the Gateway URL)
-- `OPENAI_API_KEY`: any OpenAI-compatible key; set `OPENAI_BASE_URL` for another provider
-
-`OPENUI_MODEL` optionally picks the model. The defaults are `openai/gpt-5.5` on Gateway and `gpt-5.5` on OpenAI.
+- `THESYS_API_KEY`: a key from the [Thesys Console](https://console.thesys.dev/keys). OpenUI Cloud is `https://api.thesys.dev`; set `THESYS_BASE_URL` to a gateway URL (such as `https://api.dev.thesys.dev/v1/embed`) to use that deployment instead.
+- `OPENUI_DASHBOARD_MODEL` optionally picks the model that builds and edits dashboards, as `provider/model`. The default is `anthropic/claude-sonnet-5.5`.
+- `VISITOR_SECRET` optionally signs the visitor cookie; without it, a secret is derived from the key.
 
 `pnpm eval` asks the model for a dashboard for each case in `scripts/eval/cases.ts` and scores the result offline: it parses, calls only known tools, calls the tools the question needs, and types no figures of its own. It needs the same key; results go to `eval-results/`, which git ignores.
 
 ## How it works
 
 1. `pnpm generate` writes each kit library's spec to `kits/generated/`.
-2. `/dashboard-kits/api/generate` builds the kit's system prompt from that spec, the kit's tools, rules, and examples, and streams the model's openui-lang back. The key is read only by `shared/server/model.ts`, on the server.
-3. The browser renders it with the same kit library. Each `Query()` runs through the Renderer's `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`, which validates the arguments and the result against the tool's schemas.
-4. Filters are `$bindings`: changing one re-runs every Query that reads it.
+2. **Generate** (`kits/cloud.ts`) is an OpenUI `defineDashboard` per kit: the kit's spec as the library, its tools as data tools (each with an example output from the sample data), and its preamble, rules, and the gallery dashboards closest to the request as prompt options. `/dashboard-kits/api/cloud/<kit>/dashboards` calls `create`, and OpenUI Cloud builds the dashboard, checks and repairs it against the library, and saves it. `…/edit` calls `edit`, which changes only what the request describes.
+3. The browser streams and shows it with `LiveArtifactRenderer` and the same kit library. Its queries go to `…/interpreter`, which runs a kit tool on the sample data, or a script OpenUI generated in OpenUI's interpreter. "Your dashboards" lists, pins, renames, and deletes the visitor's saved dashboards with the `useArtifact*` hooks.
+4. Each kit is its own OpenUI app (`appId`), so its tokens and dashboards stay apart. There is no sign-in: each browser is an anonymous visitor, an id in a signed, HTTP-only cookie (`shared/server/visitor.ts`), and `…/token` gives it a short-lived frontend token for its own dashboards only. The key stays on the server.
+5. The **gallery** renders its hand-written dashboards with react-lang's `Renderer`. Each `Query()` runs through its `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`, which validates the arguments and the result against the tool's schemas. Filters are `$bindings`: changing one re-runs every Query that reads it.
 
-The base components come from `dashboardLibrary` in `@openuidev/thesys`, the library behind the dashboard artifact. `createEcommerceLibrary(dashboardLibrary)` and `createAnalyticsLibrary(dashboardLibrary)` add a kit's components and widen `MediumCard` and `LargeCard` so the prompt lists the new components as valid children.
+The base components come from `library` in `@openuidev/dashboard-library`. `createEcommerceLibrary(library)` and `createAnalyticsLibrary(library)` use `library.extend()` to add a kit's components to `MediumCard` and `LargeCard` (so the prompt lists them as valid children), and remove the base charts and KPI cards the kit replaces.
 
 ## Layout
 
@@ -120,8 +120,7 @@ pnpm build
 
 ## Notes
 
-- The app uses `@openuidev/react-ui` and `@openuidev/react-headless` 0.17.1. `@openuidev/thesys` 0.14.0 asks for ^0.14, so `pnpm.overrides` in the root `package.json` points it at 0.17.1; every gallery dashboard renders with no errors. See finding 9 in the design doc.
-- `next.config.ts` turns off Turbopack minification: re-minifying the `@openuidev/thesys` bundle produces invalid JavaScript. See finding 6 in the design doc.
+- The app uses OpenUI Lang 1.1 (`@openuidev/react-lang`, `@openuidev/lang-core`) with `@openuidev/react-ui` and `@openuidev/react-headless` 0.18, `@openuidev/dashboard-library`, and `@openuidev/server`.
 - The kit theme lets the base `FilterBar` wrap on phones. See finding 4 in the design doc.
 - Every kit chart is drawn on d3 with the same interactions (hover follower and tooltip, legend focus and pin, arrow keys, spring data morph). See "Visual design" in the design doc.
 

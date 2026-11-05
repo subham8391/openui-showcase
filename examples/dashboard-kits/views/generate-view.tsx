@@ -1,39 +1,12 @@
 "use client";
 
-import { ScaledFrame } from "@/shared/ui/scaled-frame";
-import { Renderer } from "@openuidev/react-lang";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { DrillProvider } from "../blocks/Drill";
-import { createToolProvider } from "../kits/client";
-import { RunDetails } from "./run-details";
-import { API, useKitRenderer } from "./use-kit-renderer";
-
-/**
- * The part of a streaming program that is safe to render. A `$variable`
- * declaration still arriving (`$range = "3`) parses as that partial value, and
- * react-lang's store keeps the first default it sees for a variable, so the
- * filter would stick at "3" and every Query reading it would fail. Holding back
- * an unfinished declaration line until its newline arrives avoids that; the
- * finished program renders in full.
- */
-function renderable(text: string, streaming: boolean): string {
-  if (!streaming) return text;
-  const lineStart = text.lastIndexOf("\n") + 1;
-  return /^\s*\$[\w]+\s*=/.test(text.slice(lineStart)) ? text.slice(0, lineStart) : text;
-}
-
-type RunStatus = "idle" | "waiting" | "writing" | "done" | "stopped" | "error";
-
-function statusLabel(status: RunStatus): string {
-  return {
-    idle: "",
-    waiting: "Waiting for the model",
-    writing: "Writing the dashboard",
-    done: "Done",
-    stopped: "Stopped",
-    error: "Failed",
-  }[status];
-}
+import { OpenUICloudProvider, type ArtifactSummary } from "@openuidev/react-ui/cloud";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { KITS } from "../kits";
+import { KIT_LIBRARIES } from "../kits/client";
+import { artifactIdOf, cloudRoutes, createDashboard, editDashboard } from "./cloud";
+import { DashboardViewer, type ViewerRun } from "./dashboard-viewer";
+import { MyDashboards } from "./my-dashboards";
 
 /** Seconds since `since`, ticking while `active`. */
 function useElapsed(since: number, active: boolean) {
@@ -47,60 +20,124 @@ function useElapsed(since: number, active: boolean) {
   return Math.max(0, (now - since) / 1000);
 }
 
-/** A finished dashboard the viewer can step back to after digging into it. */
+/** A dashboard the viewer can step back to after digging into it. */
 interface Visited {
+  id: string;
   asked: string;
-  program: string;
-  model: string;
-  took: number;
+  title: string;
 }
 
-/** The dashboard's own title, from its header. */
-function titleOf(program: string): string | undefined {
-  return /DashboardHeader\(\s*"([^"]+)"/.exec(program)?.[1];
+/** The dashboard's title in a create response (`name=` on its content line). */
+function titleIn(response: string): string | undefined {
+  const name = /[?&]name=([^&\s]+)/.exec(response)?.[1];
+  return name ? decodeURIComponent(name.replace(/\+/g, " ")) : undefined;
 }
 
-export function GenerateView({
-  kitId,
-  ask,
-  onReturn,
-}: {
+/**
+ * Generate, on OpenUI Dashboards: a request goes to OpenUI Cloud, which builds
+ * the dashboard from the kit's library, tools and examples and saves it for
+ * this visitor. The viewer streams it, keeps it live, and changes it on
+ * request; saved dashboards are listed below the form.
+ */
+export function GenerateView(props: {
   kitId: string;
+  /** OpenUI Cloud's origin, which the browser reads dashboards from. */
+  cloudUrl: string;
   /** A question asked from elsewhere (a gallery chart): generated as soon as it arrives. */
   ask?: { prompt: string; id: number; from: { title: string } };
   /** Back to where `ask` came from. */
   onReturn?: () => void;
 }) {
-  const { kit, library, toolProvider, calls, errors, onError, reset } = useKitRenderer(kitId);
+  // One provider per kit: each kit is its own OpenUI app with its own token.
+  return (
+    <OpenUICloudProvider token={cloudRoutes(props.kitId).token} apiBaseUrl={props.cloudUrl}>
+      <Generate {...props} />
+    </OpenUICloudProvider>
+  );
+}
+
+function Generate({
+  kitId,
+  ask,
+  onReturn,
+}: {
+  kitId: string;
+  ask?: { prompt: string; id: number; from: { title: string } };
+  onReturn?: () => void;
+}) {
+  const kit = KITS.find((k) => k.id === kitId)!;
+  const library = KIT_LIBRARIES[kitId]!;
   const [prompt, setPrompt] = useState("");
-  const [asked, setAsked] = useState("");
-  const [program, setProgram] = useState("");
-  const [status, setStatus] = useState<RunStatus>("idle");
-  const [error, setError] = useState("");
-  const [model, setModel] = useState("");
-  const [started, setStarted] = useState(0);
-  const [took, setTook] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [run, setRun] = useState(0);
-  const abort = useRef<AbortController | null>(null);
+  const [run, setRun] = useState<ViewerRun | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [failed, setFailed] = useState<string>("");
   const [open, setOpen] = useState(false);
+  // A new dashboard is on its way: the progress shows below the form until its
+  // first part appears, then the viewer opens on it.
+  const [waiting, setWaiting] = useState(false);
+  const [startedAt, setStartedAt] = useState(0);
+  const elapsed = useElapsed(startedAt, waiting && !open);
   // The dashboards dug out of, newest last: the viewer's Back steps through them.
   const [trail, setTrail] = useState<Visited[]>([]);
   // The gallery dashboard the first question came from, the trail's far end.
   const [origin, setOrigin] = useState<string | null>(null);
-  // The card's thumbnail runs its own tools, so the run details count only the viewer's calls.
-  const thumbTools = useMemo(() => createToolProvider(kit, { endpoint: `${API}/tools` }), [kit]);
-  const opener = useRef<HTMLButtonElement>(null);
+  // Bumped when a new dashboard is saved, so the list shows it.
+  const [saved, setSaved] = useState(0);
+  const abort = useRef<AbortController | null>(null);
   const closer = useRef<HTMLButtonElement>(null);
-  const busy = status === "waiting" || status === "writing";
-  const elapsed = useElapsed(started, busy);
-  const title = titleOf(program);
+  const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
 
-  // A question from a gallery chart: generate it straight into the viewer.
-  // Started a tick later, so a development double mount (whose unmount aborts
-  // the run) cancels the timer instead of the request.
+  /**
+   * Asks OpenUI Cloud for a dashboard. The viewer opens once the dashboard's
+   * first part appears (from a chart in the viewer, it is open already).
+   */
+  async function start(text: string) {
+    abort.current?.abort();
+    const controller = new AbortController();
+    abort.current = controller;
+    setRun({ asked: text });
+    setFailed("");
+    setStarting(true);
+    setWaiting(true);
+    setStartedAt(performance.now());
+    try {
+      const response = await createDashboard(kitId, text, controller.signal);
+      setRun({ id: artifactIdOf(response), response, asked: text, created: true });
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        setFailed((err as Error).message);
+        setWaiting(false);
+      }
+    } finally {
+      if (abort.current === controller) setStarting(false);
+    }
+  }
+
+  // While a new dashboard is on its way, watch the (hidden) viewer: when the
+  // dashboard's first part, or an error, appears, open it full screen.
+  useEffect(() => {
+    if (!waiting || !run?.response) return;
+    const viewer = document.querySelector(".viewer");
+    if (!viewer) return;
+    const check = () => {
+      if (!viewer.querySelector(".openui-dashboard, .run__error")) return false;
+      setWaiting(false);
+      setOpen(true);
+      return true;
+    };
+    if (check()) return;
+    const observer = new MutationObserver(() => {
+      if (check()) observer.disconnect();
+    });
+    observer.observe(viewer, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [waiting, run?.response]);
+
+  // A question from a gallery chart: build it straight into the viewer.
+  // Started a tick later, so a development double mount (whose unmount
+  // aborts the request) cancels the timer instead.
   const handled = useRef(0);
   useEffect(() => {
     if (!ask || handled.current === ask.id) return;
@@ -109,44 +146,60 @@ export function GenerateView({
       setTrail([]);
       setOrigin(ask.from.title);
       setPrompt(ask.prompt);
-      setOpen(true);
-      void generate(ask.prompt);
+      void start(ask.prompt);
     });
     return () => clearTimeout(timer);
-    // generate is redefined each render; only a new question should run it.
+    // start is redefined each render; only a new question should run it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ask]);
 
   /** A question from a chart in the viewer: keep this dashboard to go back to, then answer it. */
   function dig(question: string) {
-    if (program && status === "done") {
-      setTrail((prev) => [...prev, { asked, program, model, took }]);
+    if (run?.id) {
+      const title = (run.response && titleIn(run.response)) || run.asked;
+      setTrail((prev) => [...prev, { id: run.id!, asked: run.asked, title }]);
     }
     setPrompt(question);
-    setOpen(true);
-    void generate(question);
+    void start(question);
   }
 
-  /** Back to the dashboard this one was dug out of, as it was (no new generation). */
+  /** Back to the dashboard this one was dug out of, as saved (no new generation). */
   function back() {
     const last = trail[trail.length - 1];
     if (!last) return;
     abort.current?.abort();
-    abort.current = null;
-    reset();
+    setStarting(false);
+    setWaiting(false);
+    setFailed("");
     setTrail((prev) => prev.slice(0, -1));
-    setAsked(last.asked);
-    setPrompt(last.asked);
-    setProgram(last.program);
-    setModel(last.model);
-    setTook(last.took);
-    setError("");
-    setRun((r) => r + 1);
-    setStatus("done");
+    setRun({ id: last.id, asked: last.asked });
+  }
+
+  /** A change to the open dashboard: OpenUI patches it in place, and the viewer switches to it. */
+  async function edit(change: string) {
+    if (!run?.id) return;
+    const response = await editDashboard(kitId, run.id, change);
+    setRun({ id: run.id, response, asked: change });
+  }
+
+  // The list shows a dashboard once it's built and saved.
+  const onSaved = useCallback(() => setSaved((n) => n + 1), []);
+
+  /** Opens a saved dashboard from the list. */
+  function openSaved(item: ArtifactSummary) {
+    opener.current = document.activeElement as HTMLElement | null;
+    abort.current?.abort();
+    setStarting(false);
+    setWaiting(false);
+    setFailed("");
+    setTrail([]);
+    setOrigin(null);
+    setRun({ id: item.id, asked: "" });
+    setOpen(true);
   }
 
   // Full-page viewer: Escape closes it, the page behind doesn't scroll, and
-  // focus moves to its close button and back to the card's open button.
+  // focus moves to its close button and back where it was.
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -156,80 +209,20 @@ export function GenerateView({
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
     closer.current?.focus();
-    const card = opener.current;
+    const returnTo = opener.current;
     return () => {
       document.body.style.overflow = overflow;
       window.removeEventListener("keydown", onKey);
-      card?.focus();
+      returnTo?.focus();
     };
   }, [open]);
 
-  async function generate(text = prompt) {
-    abort.current?.abort();
-    const controller = new AbortController();
-    abort.current = controller;
-    reset();
-    setProgram("");
-    setError("");
-    setModel("");
-    setAsked(text);
-    setRun((r) => r + 1);
-    setStatus("waiting");
-    const t0 = performance.now();
-    setStarted(t0);
-    try {
-      const response = await fetch(`${API}/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kit: kit.id, prompt: text }),
-        signal: controller.signal,
-      });
-      if (!response.ok || !response.body) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? `Generation failed (${response.status})`);
-      }
-      setModel(response.headers.get("X-Model") ?? "");
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let out = "";
-      let writing = false;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        out += decoder.decode(value, { stream: true });
-        if (!writing && out.trim()) {
-          writing = true;
-          setStatus("writing");
-          // The model has started writing: switch to full screen to watch it
-          // build. Only once, so closing the viewer mid-run keeps it closed.
-          setOpen(true);
-        }
-        setProgram(out);
-      }
-      setTook((performance.now() - t0) / 1000);
-      setStatus(out.trim() ? "done" : "error");
-      if (!out.trim()) setError("The model returned nothing. Try again or rephrase the question.");
-    } catch (err) {
-      setTook((performance.now() - t0) / 1000);
-      if (controller.signal.aborted) {
-        setStatus("stopped");
-        return;
-      }
-      setStatus("error");
-      setError((err as Error).message);
-    }
-  }
-
-  async function copyProgram() {
-    try {
-      await navigator.clipboard.writeText(program);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard can be refused; the program is still under "openui-lang program".
-    }
-  }
-
+  const previous = trail[trail.length - 1];
+  const backTo = previous
+    ? { label: previous.title, onClick: back }
+    : origin && onReturn
+      ? { label: origin, onClick: onReturn }
+      : undefined;
   const article = /^[aeiou]/i.test(kit.name) ? "an" : "a";
 
   return (
@@ -238,11 +231,11 @@ export function GenerateView({
         className="composer"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!busy && prompt.trim()) {
-            setTrail([]);
-            setOrigin(null);
-            void generate();
-          }
+          if (starting || !prompt.trim()) return;
+          opener.current = document.activeElement as HTMLElement | null;
+          setTrail([]);
+          setOrigin(null);
+          void start(prompt.trim());
         }}
       >
         <label htmlFor="prompt" className="composer__label">
@@ -269,13 +262,13 @@ export function GenerateView({
             <button
               type="submit"
               className="button button--primary"
-              disabled={busy || !prompt.trim()}
+              disabled={starting || !prompt.trim()}
             >
-              {busy ? "Generating…" : "Generate"}
+              {starting ? "Starting…" : "Generate"}
             </button>
           </div>
         </div>
-        <details className="suggestions" open={status === "idle" ? true : undefined}>
+        <details className="suggestions" open={run ? undefined : true}>
           <summary className="suggestions__label">Try one of these</summary>
           <ul className="suggestions__list">
             {kit.starters.map((starter) => (
@@ -293,19 +286,18 @@ export function GenerateView({
             ))}
           </ul>
         </details>
+        <p className="composer__note">
+          Built and saved with <strong>OpenUI Dashboards</strong>: the model writes the dashboard
+          once, and it loads live data every time it opens.
+        </p>
       </form>
 
-      {!program && !open && status === "waiting" && (
+      {!open && waiting && (
         <div className="pending run--waiting">
           <div className="pending__bar" role="status" aria-live="polite">
             <span className="run__dot" aria-hidden />
-            <strong>Waiting for the model</strong>
-            <span className="run__meta">
-              {[model, `${elapsed.toFixed(1)} s`].filter(Boolean).join(" · ")}
-            </span>
-            <button type="button" className="button" onClick={() => abort.current?.abort()}>
-              Stop
-            </button>
+            <strong>{starting ? "Starting" : "Waiting for the model"}</strong>
+            <span className="run__meta">{elapsed.toFixed(1)} s</span>
           </div>
           <div className="run__waiting" aria-hidden>
             <div className="skeleton skeleton--title" />
@@ -322,18 +314,16 @@ export function GenerateView({
         </div>
       )}
 
-      {!program && !open && (status === "error" || status === "stopped") && (
-        <div className={`pending run--${status}`}>
+      {!open && failed && (
+        <div className="pending run--error">
           <div className="pending__bar" role="status">
             <span className="run__dot" aria-hidden />
-            <strong>{status === "error" ? "Generation failed" : "Stopped"}</strong>
-            <span className="run__meta">
-              {status === "error" ? error : "before the model wrote anything"}
-            </span>
+            <strong>Generation failed</strong>
+            <span className="run__meta">{failed}</span>
             <button
               type="button"
               className="button button--primary"
-              onClick={() => void generate(asked)}
+              onClick={() => void start(run?.asked ?? prompt)}
             >
               Try again
             </button>
@@ -341,193 +331,24 @@ export function GenerateView({
         </div>
       )}
 
-      {(program || open) && (
-        <>
-          {/* The card stands for the run once the viewer is closed; while it is
-              open the card isn't drawn, so it can't flash behind the viewer. */}
-          <div className={`artifact run--${status}`} hidden={open}>
-            <span className="artifact__thumb">
-              {program && !open ? (
-                <ScaledFrame className="artifact__frame">
-                  <Renderer
-                    response={renderable(program, status === "writing")}
-                    library={library}
-                    isStreaming={status === "writing"}
-                    toolProvider={thumbTools}
-                  />
-                </ScaledFrame>
-              ) : (
-                <span className="artifact__shimmer" aria-hidden>
-                  <span className="skeleton skeleton--title" />
-                  <span className="skeleton-row">
-                    <span className="skeleton skeleton--hero" />
-                    <span className="skeleton skeleton--side" />
-                  </span>
-                </span>
-              )}
-              <span className="artifact__chip">
-                <span className="run__dot" aria-hidden />
-                {statusLabel(status)} · {(busy ? elapsed : took).toFixed(1)} s
-              </span>
-              <span className="artifact__play" aria-hidden>
-                <svg viewBox="0 0 24 24">
-                  <path d="M8 5.5v13l11-6.5z" />
-                </svg>
-              </span>
-            </span>
-            <span className="artifact__foot">
-              <span className="artifact__text">
-                <span className="artifact__title">{title ?? (busy ? "New dashboard" : asked)}</span>
-                <span className="artifact__meta">
-                  {[
-                    `${kit.name} dashboard`,
-                    model,
-                    program && `${program.length.toLocaleString()} characters`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </span>
-              <span className="artifact__open">
-                Open
-                <svg viewBox="0 0 24 24" aria-hidden>
-                  <path d="M14 4h6v6M20 4l-8 8M10 6H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5" />
-                </svg>
-              </span>
-            </span>
-            {/* Stretched over the whole card; a sibling of the thumbnail, so the
-                dashboard's own buttons never sit inside it. */}
-            <button
-              ref={opener}
-              type="button"
-              className="artifact__hit"
-              onClick={() => setOpen(true)}
-              aria-label={`Open ${title ?? "the dashboard"} full screen`}
-            />
-          </div>
+      <MyDashboards kitId={kitId} library={library} onOpen={openSaved} refreshKey={saved} />
 
-          <div
-            className={`viewer run--${status}`}
-            role="dialog"
-            aria-modal="true"
-            aria-label={title ?? "Generated dashboard"}
-            hidden={!open}
-          >
-            <header className="viewer__bar">
-              {(() => {
-                // Back steps to the dashboard this one was dug out of, or at
-                // the trail's far end to the gallery dashboard it began on.
-                const previous = trail[trail.length - 1];
-                const to = previous
-                  ? (titleOf(previous.program) ?? "the previous dashboard")
-                  : origin && onReturn
-                    ? origin
-                    : null;
-                if (!to) return null;
-                return (
-                  <button
-                    type="button"
-                    className="viewer__back"
-                    onClick={previous ? back : onReturn}
-                    title={`Back to ${to}`}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden>
-                      <path d="M15 5l-7 7 7 7" />
-                    </svg>
-                    <span className="viewer__back-text">{to}</span>
-                  </button>
-                );
-              })()}
-              <div className="viewer__heading">
-                <strong className="viewer__title">{title ?? "New dashboard"}</strong>
-                <span className="viewer__status" role="status" aria-live="polite">
-                  <span className="run__dot" aria-hidden />
-                  {statusLabel(status)}
-                  <span className="run__meta">
-                    {[
-                      model,
-                      `${(busy ? elapsed : took).toFixed(1)} s`,
-                      program && `${program.length.toLocaleString()} characters`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </span>
-                <span className="run__asked" title={asked}>
-                  “{asked}”
-                </span>
-              </div>
-              <div className="viewer__actions">
-                {busy ? (
-                  <button type="button" className="button" onClick={() => abort.current?.abort()}>
-                    Stop
-                  </button>
-                ) : (
-                  <>
-                    {program && (
-                      <button type="button" className="button" onClick={() => void copyProgram()}>
-                        {copied ? "Copied" : "Copy program"}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="button button--primary"
-                      onClick={() => void generate(asked)}
-                    >
-                      {status === "error" ? "Try again" : "Regenerate"}
-                    </button>
-                  </>
-                )}
-                <button
-                  ref={closer}
-                  type="button"
-                  className="viewer__close"
-                  aria-label="Close"
-                  onClick={() => setOpen(false)}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden>
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  </svg>
-                </button>
-              </div>
-            </header>
-
-            <div className="viewer__body">
-              {status === "error" && <p className="run__error">{error}</p>}
-              {status === "waiting" && (
-                <div className="run__waiting" aria-hidden>
-                  <div className="skeleton skeleton--title" />
-                  <div className="skeleton-row">
-                    <div className="skeleton skeleton--hero" />
-                    <div className="skeleton skeleton--side" />
-                  </div>
-                  <div className="skeleton-row skeleton-row--kpis">
-                    {[0, 1, 2, 3].map((i) => (
-                      <div key={i} className="skeleton skeleton--kpi" />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {program && (
-                <div className="canvas">
-                  {/* Charts here can be dug into once the dashboard is finished. */}
-                  <DrillProvider onAsk={dig} disabled={status !== "done"}>
-                    <Renderer
-                      key={run}
-                      response={renderable(program, status === "writing")}
-                      library={library}
-                      isStreaming={status === "writing"}
-                      toolProvider={toolProvider}
-                      onError={onError}
-                    />
-                  </DrillProvider>
-                </div>
-              )}
-              {program && !busy && <RunDetails program={program} calls={calls} errors={errors} />}
-            </div>
-          </div>
-        </>
-      )}
+      <DashboardViewer
+        kitId={kitId}
+        library={library}
+        open={open}
+        onClose={() => setOpen(false)}
+        closer={closer}
+        run={run}
+        starting={starting}
+        failed={
+          failed ? { message: failed, retry: () => void start(run?.asked ?? prompt) } : undefined
+        }
+        back={backTo}
+        onDig={dig}
+        onEdit={edit}
+        onSaved={onSaved}
+      />
     </section>
   );
 }

@@ -1,11 +1,4 @@
-import {
-  createLibrary,
-  defineComponent,
-  type DefinedComponent,
-  type Library,
-} from "@openuidev/react-lang";
-import { z } from "zod/v4";
-import { BASE_COMPONENT_GROUPS } from "../base-prompt";
+import { createLibrary, type DefinedComponent, type Library } from "@openuidev/react-lang";
 
 /** Base containers a kit component can be placed in. */
 export type CardSlot = "MediumCard" | "LargeCard";
@@ -16,6 +9,35 @@ export interface KitComponent {
   slots: CardSlot[];
 }
 
+/**
+ * Base components every kit replaces with its own: the charts (TrendChart,
+ * ColumnChart, BarList, ShareBar, ...) and the KPI cards (KpiStrip,
+ * HeroMetric), with the icon labels those cards took; and the buttons, whose
+ * actions have no chat to reach on this site. They are removed, so the model never sees a component it
+ * should not use, and the prompt is shorter.
+ */
+export const REPLACED_BASE = [
+  "LineChart",
+  "AreaChart",
+  "BarChart",
+  "HorizontalBarChart",
+  "PieChart",
+  "RadialChart",
+  "RadarChart",
+  "ScatterChart",
+  "Series",
+  "ScatterSeries",
+  "Point",
+  "SmallCard",
+  "MetricIndicator",
+  "OverviewCardBlock",
+  "OverviewCardItem",
+  "IconText",
+  "IconTag",
+  "Button",
+  "ButtonGroup",
+];
+
 export interface KitLibraryDefinition {
   /** Prompt group for the kit's own components. */
   group: { name: string; notes: string[] };
@@ -23,63 +45,44 @@ export interface KitLibraryDefinition {
 }
 
 /**
- * Base cards declare their children as a closed union, so adding a component
- * to the library is not enough: the prompt would still tell the model that
- * MediumCard only takes the base components. Rebuild the card with the union
- * widened by the kit components; the renderer and other props are unchanged.
- */
-function widenCard(
-  card: DefinedComponent<any>,
-  extra: DefinedComponent<any>[],
-): DefinedComponent<any> {
-  if (extra.length === 0) return card;
-  const shape = card.props.shape;
-  const children = shape.children;
-  const array = children instanceof z.ZodDefault ? children.unwrap() : children;
-  if (!(array instanceof z.ZodArray) || !(array.element instanceof z.ZodUnion)) {
-    throw new Error(
-      `[dashboard-kit] ${card.name}.children is no longer an array of a union; update widenCard for the new base library.`,
-    );
-  }
-  const options = [...array.element.options, ...extra.map((c) => c.ref)];
-  return defineComponent({
-    name: card.name,
-    description: card.description,
-    props: z.object({ ...shape, children: z.array(z.union(options)).default([]) }),
-    component: card.component,
-  });
-}
-
-/**
  * A base dashboard library plus one kit's components. The base is passed in
- * (for example `dashboardLibrary` from `@openuidev/thesys`), so the kits do not
- * depend on any one dashboard implementation.
+ * (`library` from `@openuidev/dashboard-library`), so the kits do not depend
+ * on any one dashboard implementation. `extend` adds each component to the
+ * cards it may sit in, so the prompt lists it as a valid child there; the
+ * kit's own prompt group then joins the base groups.
  */
 export function createKitLibrary(base: Library, def: KitLibraryDefinition): Library {
-  const kitComponents = def.components.map((c) => c.component);
-  const slotted = (slot: CardSlot) =>
-    def.components.filter((c) => c.slots.includes(slot)).map((c) => c.component);
-
-  const components: Record<string, DefinedComponent<any>> = {
-    ...base.components,
-    MediumCard: widenCard(base.components.MediumCard, slotted("MediumCard")),
-    LargeCard: widenCard(base.components.LargeCard, slotted("LargeCard")),
-  };
-  for (const component of kitComponents) {
-    if (components[component.name]) {
-      throw new Error(`[dashboard-kit] ${component.name} already exists in the base library.`);
-    }
-    components[component.name] = component;
+  if (!base.extend) {
+    throw new Error(
+      "[dashboard-kit] The base library has no extend(); use OpenUI Lang 1.0 or later.",
+    );
   }
-
+  const removed = REPLACED_BASE.filter((name) => base.components[name]);
+  const extended = base.extend({
+    components: {
+      add: def.components.map(({ component, slots }) =>
+        slots.length ? { component, slots: slots.map((slot) => `${slot}.children`) } : component,
+      ),
+      remove: removed,
+    },
+  });
+  // The base groups without the removed charts, or the notes that name them.
+  const mentions = new RegExp(`\\b(${removed.join("|")})\\b`);
+  const baseGroups = (base.componentGroups ?? [])
+    .map((group) => ({
+      ...group,
+      components: group.components.filter((name) => !removed.includes(name)),
+      notes: group.notes?.filter((note) => !mentions.test(note)),
+    }))
+    .filter((group) => group.components.length > 0);
   return createLibrary({
-    root: base.root ?? "Dashboard",
-    components: Object.values(components),
+    root: extended.root ?? "Dashboard",
+    components: Object.values(extended.components),
     componentGroups: [
-      ...BASE_COMPONENT_GROUPS,
+      ...baseGroups,
       {
         name: def.group.name,
-        components: kitComponents.map((c) => c.name),
+        components: def.components.map((c) => c.component.name),
         notes: def.group.notes,
       },
     ],

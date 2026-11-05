@@ -51,10 +51,10 @@ function rect(top: number, bottom: number): DOMRect {
 /** A card whose box ends at `bottom` and whose content ends at `contentBottom`. */
 function card(bottom: number, contentBottom: number) {
   const el = document.createElement("div");
-  el.className = "c1-shell-card";
+  el.className = "openui-dashboard-shell-card";
   el.getBoundingClientRect = () => rect(0, bottom);
   const wrap = document.createElement("div");
-  wrap.className = "c1-shell-card__content-wrap";
+  wrap.className = "openui-dashboard-shell-card-content-wrap";
   wrap.getBoundingClientRect = () => rect(0, contentBottom);
   const block = document.createElement("div");
   block.getBoundingClientRect = () => rect(0, contentBottom);
@@ -68,7 +68,7 @@ function dashboard(shortContent: number) {
   const root = document.createElement("div");
   root.className = "kit-theme";
   const row = document.createElement("div");
-  row.className = "c1-card-row";
+  row.className = "openui-dashboard-card-row";
   row.append(card(600, 580), card(600, shortContent));
   root.append(row);
   document.body.append(root);

@@ -216,16 +216,16 @@
 /* A base dashboard card holding a filling chart (marked `data-kit-fill`) stretches
    its body to the row height, so the chart takes the space a taller neighbour
    leaves instead of a blank gap. */
-.kit-theme .c1-shell-card__content-wrap:has([data-kit-fill]) {
+.kit-theme .openui-dashboard-shell-card-content-wrap:has([data-kit-fill]) {
   display: flex;
   flex-direction: column;
 }
-.kit-theme .c1-shell-card__content:has([data-kit-fill]) {
+.kit-theme .openui-dashboard-shell-card-content:has([data-kit-fill]) {
   flex: 1 1 auto;
 }
 /* A row whose cards differ too much in height for any chart to make up
    (see core/library/rowBalance.ts): every card takes the full width instead. */
-.kit-theme .c1-card-row.kit-row--stacked > .c1-shell-card {
+.kit-theme .openui-dashboard-card-row.kit-row--stacked > .openui-dashboard-shell-card {
   flex: 1 1 100%;
 }
 

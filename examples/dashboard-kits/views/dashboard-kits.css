@@ -658,6 +658,223 @@
   }
 }
 
+/* A line under the form saying what Generate runs on. */
+.composer__note {
+  margin: 0;
+  font: 400 12.5px/1.5 var(--kit-font);
+  color: var(--kit-ink-2);
+}
+.composer__note strong {
+  font-weight: 600;
+  color: var(--kit-ink);
+}
+
+/* The visitor's saved dashboards (OpenUI Cloud), below the form. */
+.saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+.saved-list__head h2 {
+  margin: 0;
+  font: 650 17px var(--kit-font);
+  color: var(--kit-ink);
+}
+.saved-list__head p {
+  margin: 4px 0 0;
+  font: 400 13px/1.5 var(--kit-font);
+  color: var(--kit-ink-2);
+}
+.saved-grid {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+.saved {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--kit-border);
+  border-radius: var(--kit-radius);
+  background: var(--kit-card);
+  box-shadow: var(--kit-shadow);
+  transition: border-color 0.15s ease;
+}
+.saved:hover,
+.saved:focus-within {
+  border-color: var(--kit-border-strong);
+}
+.saved--pinned {
+  border-color: color-mix(in oklab, var(--kit-accent) 45%, var(--kit-border));
+}
+.saved__thumb {
+  position: relative;
+  display: block;
+  height: 180px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--kit-border);
+  background: var(--kit-page);
+  pointer-events: none;
+}
+.saved__frame {
+  height: 100%;
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.saved__placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+.saved__placeholder .skeleton {
+  animation: none;
+}
+.saved__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  min-height: 56px;
+}
+.saved__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+/* The open button covers the whole card, under the action buttons. */
+.saved {
+  position: relative;
+}
+.saved__open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.saved__open:focus-visible {
+  outline: none;
+}
+.saved:has(.saved__open:focus-visible) {
+  outline: 2px solid var(--kit-accent);
+  outline-offset: 2px;
+}
+.saved__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 14px var(--kit-font);
+  color: var(--kit-ink);
+}
+.saved__meta {
+  font: 500 12px var(--kit-font);
+  color: var(--kit-ink-2);
+}
+.saved__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+}
+.saved__actions .button {
+  padding: 6px 10px;
+}
+.saved__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--kit-ink-2);
+  cursor: pointer;
+}
+.saved__icon:hover,
+.saved__icon:focus-visible {
+  background: var(--kit-sunk);
+  color: var(--kit-ink);
+}
+.saved__icon[aria-pressed="true"] {
+  color: var(--kit-accent);
+}
+.saved__icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.saved__rename {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+.saved__rename input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--kit-border-strong);
+  border-radius: 8px;
+  background: var(--kit-page);
+  color: var(--kit-ink);
+  font: 500 13px var(--kit-font);
+}
+
+/* The renderer fills the viewer: bar, scrolling body, change box. */
+.viewer__renderer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* "Change it": a change to the open dashboard, pinned to the viewer's foot. */
+.viewer__change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px max(20px, calc((100% - 1440px) / 2));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--kit-border);
+  background: var(--kit-card);
+}
+.viewer__change input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--kit-border-strong);
+  border-radius: 10px;
+  background: var(--kit-page);
+  color: var(--kit-ink);
+  font: 500 14px var(--kit-font);
+}
+.viewer__change input:focus-visible {
+  outline: 2px solid var(--kit-accent);
+  outline-offset: 1px;
+}
+.viewer__change-error {
+  flex-basis: 100%;
+  margin: 0;
+  font: 500 12.5px var(--kit-font);
+  color: var(--kit-bad-ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .run__dot,
   .skeleton,

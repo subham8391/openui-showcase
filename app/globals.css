@@ -132,6 +132,11 @@ a.workspace__brand {
   background: var(--kit-ink);
   color: var(--kit-page);
 }
+.button--danger {
+  border-color: var(--kit-bad-ink);
+  background: var(--kit-bad-ink);
+  color: var(--kit-page);
+}
 .button:disabled {
   opacity: 0.5;
   cursor: default;

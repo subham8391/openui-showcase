@@ -19,7 +19,7 @@ import { useEffect } from "react";
  */
 
 const ROOT = ".kit-theme";
-const ROW = ".kit-theme .c1-card-row";
+const ROW = ".kit-theme .openui-dashboard-card-row";
 const STACKED = "kit-row--stacked";
 /** Blank height a card may keep below its content before its row stacks. */
 const MAX_BLANK = 140;
@@ -174,13 +174,13 @@ function cardsOf(row: Element): HTMLElement[] {
   return [...row.children].filter(
     (c): c is HTMLElement =>
       c instanceof HTMLElement &&
-      c.classList.contains("c1-shell-card") &&
-      !c.classList.contains("c1-shell-card--small"),
+      c.classList.contains("openui-dashboard-shell-card") &&
+      !c.classList.contains("openui-dashboard-shell-card--size-small"),
   );
 }
 
 function bodyOf(card: Element): Element {
-  return card.querySelector(":scope > .c1-shell-card__content-wrap") ?? card;
+  return card.querySelector(":scope > .openui-dashboard-shell-card-content-wrap") ?? card;
 }
 
 /** Stacks the row when a card in it would sit over a large blank. */

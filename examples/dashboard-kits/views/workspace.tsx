@@ -16,7 +16,7 @@ const KIT_ICONS: Record<string, string> = {
   analytics: "M4 20V10m6 10V4m6 16v-7m6 7V8",
 };
 
-export function KitWorkspace() {
+export function KitWorkspace({ cloudUrl }: { cloudUrl: string }) {
   const [kitId, setKitId] = useState(KITS[0].id);
   const [view, setView] = useState<View>("gallery");
   // The gallery dashboard a link asked for (?kit=ecommerce&dashboard=2).
@@ -109,6 +109,7 @@ export function KitWorkspace() {
         <GenerateView
           key={kit.id}
           kitId={kit.id}
+          cloudUrl={cloudUrl}
           ask={ask}
           onReturn={() => {
             // Back to the gallery dashboard the question was asked from.

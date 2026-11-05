@@ -1,4 +1,4 @@
-import { dashboardLibrary } from "@openuidev/thesys";
+import { library as dashboardLibrary } from "@openuidev/dashboard-library";
 import { createAnalyticsLibrary } from "./analytics/library";
 import { createEcommerceLibrary } from "./ecommerce/library";
 

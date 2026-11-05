@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeProvider as DashboardTheme } from "@openuidev/dashboard-library";
 import { ThemeProvider } from "@openuidev/react-ui";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
@@ -49,39 +50,43 @@ export function SiteShell({ crumb, children }: { crumb?: string; children: React
 
   return (
     <ThemeProvider mode={mode} lightTheme={FONTS} darkTheme={FONTS}>
-      <main className="workspace kit-theme" data-mode={mode}>
-        <header className="workspace__bar">
-          <Link href="/" className="workspace__brand">
-            <span className="workspace__logo" aria-hidden>
-              <svg viewBox="0 0 20 20">
-                <rect x="2" y="2" width="7" height="9" rx="2" />
-                <rect x="11" y="2" width="7" height="5" rx="2" />
-                <rect x="2" y="13" width="7" height="5" rx="2" />
-                <rect x="11" y="9" width="7" height="9" rx="2" />
-              </svg>
-            </span>
-            <span>
-              <strong>OpenUI showcase</strong>
-              {crumb && <span className="workspace__crumb">{crumb}</span>}
-            </span>
-          </Link>
-          <div className="segmented" role="radiogroup" aria-label="Theme">
-            {(["light", "dark", "system"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                role="radio"
-                aria-checked={choice === t}
-                onClick={() => choose(t)}
-              >
-                {{ light: "Light", dark: "Dark", system: "System" }[t]}
-              </button>
-            ))}
-          </div>
-        </header>
+      {/* The dashboard library's cards, filters and headers take their own
+          theme; it follows the same mode and fonts. */}
+      <DashboardTheme mode={mode} lightTheme={FONTS} darkTheme={FONTS}>
+        <main className="workspace kit-theme" data-mode={mode}>
+          <header className="workspace__bar">
+            <Link href="/" className="workspace__brand">
+              <span className="workspace__logo" aria-hidden>
+                <svg viewBox="0 0 20 20">
+                  <rect x="2" y="2" width="7" height="9" rx="2" />
+                  <rect x="11" y="2" width="7" height="5" rx="2" />
+                  <rect x="2" y="13" width="7" height="5" rx="2" />
+                  <rect x="11" y="9" width="7" height="9" rx="2" />
+                </svg>
+              </span>
+              <span>
+                <strong>OpenUI showcase</strong>
+                {crumb && <span className="workspace__crumb">{crumb}</span>}
+              </span>
+            </Link>
+            <div className="segmented" role="radiogroup" aria-label="Theme">
+              {(["light", "dark", "system"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="radio"
+                  aria-checked={choice === t}
+                  onClick={() => choose(t)}
+                >
+                  {{ light: "Light", dark: "Dark", system: "System" }[t]}
+                </button>
+              ))}
+            </div>
+          </header>
 
-        {children}
-      </main>
+          {children}
+        </main>
+      </DashboardTheme>
     </ThemeProvider>
   );
 }

@@ -148,14 +148,14 @@ describe("drillPlaceOf", () => {
   it("reads the card's header title and the dashboard's title", () => {
     document.body.innerHTML = `
       <div class="canvas">
-        <div class="c1-dashboard-header">Store overview
+        <div class="openui-dashboard-header">Store overview
 Oct 1 – Oct 10</div>
-        <div class="c1-shell-card">
-          <div class="c1-dashboard-card-header__content">Orders by day
+        <div class="openui-dashboard-shell-card">
+          <div class="openui-dashboard-card-header-content">Orders by day
 Placed orders, all channels</div>
           <div id="chart"></div>
         </div>
-        <div class="c1-shell-card"><span class="kit-hero__label">Net sales</span><div id="hero"></div></div>
+        <div class="openui-dashboard-shell-card"><span class="kit-hero__label">Net sales</span><div id="hero"></div></div>
       </div>`;
     expect(drillPlaceOf(document.getElementById("chart"))).toEqual({
       dashboard: "Store overview",

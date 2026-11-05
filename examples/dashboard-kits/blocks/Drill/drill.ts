@@ -64,12 +64,12 @@ function firstLine(el: Element | null | undefined): string | undefined {
  */
 export function drillPlaceOf(el: Element | null): DrillPlace {
   if (!el) return {};
-  const card = el.closest(".c1-shell-card, .openui-card");
+  const card = el.closest(".openui-dashboard-shell-card, .openui-card");
   const chart =
-    firstLine(card?.querySelector(".c1-dashboard-card-header__content")) ??
+    firstLine(card?.querySelector(".openui-dashboard-card-header-content")) ??
     firstLine(card?.querySelector(".kit-hero__label"));
   const root = el.closest(".canvas") ?? document;
-  const dashboard = firstLine(root.querySelector('[class*="dashboard-header"]'));
+  const dashboard = firstLine(root.querySelector(".openui-dashboard-header"));
   return { dashboard, chart };
 }
 

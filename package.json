@@ -30,11 +30,12 @@
     "ci": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run check && pnpm run build"
   },
   "dependencies": {
-    "@openuidev/lang-core": "0.3.2",
-    "@openuidev/react-headless": "0.17.1",
-    "@openuidev/react-lang": "0.3.2",
-    "@openuidev/react-ui": "0.17.1",
-    "@openuidev/thesys": "0.14.0",
+    "@openuidev/dashboard-library": "0.0.1",
+    "@openuidev/lang-core": "1.1.0",
+    "@openuidev/react-headless": "0.18.4",
+    "@openuidev/react-lang": "1.1.0",
+    "@openuidev/react-ui": "0.18.4",
+    "@openuidev/server": "0.4.0",
     "@radix-ui/react-tooltip": "^1.2.8",
     "clsx": "^2.1.1",
     "d3-scale": "^4.0.2",
@@ -49,7 +50,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
-    "@openuidev/cli": "0.5.1",
+    "@openuidev/cli": "0.6.2",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-selection": "^3.0.11",
     "@types/d3-shape": "^3.1.8",
@@ -74,16 +75,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@openuidev/thesys>@openuidev/react-ui": "0.17.1",
-      "@openuidev/thesys>@openuidev/react-headless": "0.17.1",
       "postcss@<8.5.10": ">=8.5.10",
       "uuid@<11.1.1": "^11.1.1"
-    },
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "@openuidev/thesys>@openuidev/react-ui": "0.17",
-        "@openuidev/thesys>@openuidev/react-headless": "0.17"
-      }
     },
     "onlyBuiltDependencies": [
       "@openuidev/lang-core",

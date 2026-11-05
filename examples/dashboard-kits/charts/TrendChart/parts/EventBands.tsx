@@ -82,10 +82,14 @@ export function EventBands({
         return (
           <g key={event.label} className={classes}>
             {marks ? (
+              // Half a step either side of its days, but never past the plot:
+              // a band on the first or last day stops at the axis ends.
               <rect
-                x={x(a) - halfStep}
+                x={Math.max(x(0), x(a) - halfStep)}
                 y={top}
-                width={x(b) - x(a) + halfStep * 2}
+                width={
+                  Math.min(x(labels.length - 1), x(b) + halfStep) - Math.max(x(0), x(a) - halfStep)
+                }
                 height={height}
                 className={`${P}-event-band`}
               />

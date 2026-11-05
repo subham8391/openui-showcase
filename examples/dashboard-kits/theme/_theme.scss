@@ -106,19 +106,19 @@
 
 /* The base dashboard's filter triggers reset every style (`all: unset`) and set
    no focus ring of their own, so keyboard focus on them was invisible. */
-.kit-theme .c1-filter-single-select__trigger:focus-visible,
-.kit-theme .c1-filter-multi-select__trigger:focus-visible {
+.kit-theme .openui-dashboard-filter-select-trigger:focus-visible,
+.kit-theme .openui-dashboard-filter-multi-select-trigger:focus-visible {
   outline: 2px solid var(--kit-accent);
   outline-offset: 2px;
 }
 
 /* Filters wrap on narrow screens instead of overflowing. */
-.kit-theme .c1-filter-bar,
-.kit-theme .c1-filter-bar__side {
+.kit-theme .openui-dashboard-filter-bar,
+.kit-theme .openui-dashboard-filter-bar-side {
   flex-wrap: wrap;
 }
 
 /* Figures line up in base tables. */
-.kit-theme .c1-dashboard table {
+.kit-theme .openui-dashboard table {
   font-variant-numeric: tabular-nums;
 }

@@ -9,12 +9,7 @@ import { analyticsKit } from "./analytics/kit";
 import { ecommerceHandlers } from "./ecommerce/data";
 import { ecommerceKit } from "./ecommerce/kit";
 
-export {
-  BASE_COMPONENT_GROUPS,
-  BASE_RULES,
-  COMPOSITION_RULES,
-  DATA_RULES,
-} from "../engine/base-prompt";
+export { BASE_RULES, COMPOSITION_RULES, DATA_RULES } from "../engine/base-prompt";
 export { defineTool, toToolSpec } from "../engine/kit";
 export type { GalleryDashboard, KitDefinition, KitTool } from "../engine/kit";
 export { buildSystemPrompt, PROMPT_BUDGET, rankGallery, runTool } from "../engine/prompt";

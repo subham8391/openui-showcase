@@ -1,5 +1,4 @@
 import "@openuidev/react-ui/components.css";
-import "@openuidev/thesys/styles.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
