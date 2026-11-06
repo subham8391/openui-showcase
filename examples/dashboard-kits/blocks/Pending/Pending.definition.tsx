@@ -1,6 +1,6 @@
 import { useIsQueryLoading, useIsStreaming } from "@openuidev/react-lang";
 import { useEffect, useState } from "react";
-import { useRowBalance } from "../../engine/library/rowBalance";
+import { useRowBalance } from "../../engine/library/row-balance";
 import { EmptyState, Skeleton, type SkeletonKind } from "../States";
 
 /**

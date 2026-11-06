@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
-import { installDom, mount, runFrames } from "../../engine/test/testDom";
+import { installDom, mount, runFrames } from "../../engine/test/test-dom";
 import { activeTickCount } from "../shared/spring/ticker";
 import { Sparkline } from "./Sparkline";
 import { nearestIndex, sparkLayout } from "./sparklineGeometry";

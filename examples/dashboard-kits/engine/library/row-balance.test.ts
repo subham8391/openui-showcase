@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { releaseDetachedRoots, watchKitRoots, watchedKitRoots } from "./rowBalance";
+import { releaseDetachedRoots, watchKitRoots, watchedKitRoots } from "./row-balance";
 
 /** jsdom has no layout: a ResizeObserver the test drives by hand. */
 class FakeResizeObserver {

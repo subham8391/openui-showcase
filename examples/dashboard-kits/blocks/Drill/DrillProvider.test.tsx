@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, createElement, useRef } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { installDom, mount } from "../../engine/test/testDom";
+import { installDom, mount } from "../../engine/test/test-dom";
 import type { DrillTarget } from "./drill";
 import { DrillProvider, useDrill } from "./DrillProvider";
 

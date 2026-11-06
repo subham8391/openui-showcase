@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
-import { installDom, mount } from "../../engine/test/testDom";
+import { installDom, mount } from "../../engine/test/test-dom";
 import { SegmentFlow } from "./SegmentFlow";
 
 beforeAll(() => installDom());

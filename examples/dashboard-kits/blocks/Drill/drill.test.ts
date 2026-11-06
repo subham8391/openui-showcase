@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeAll, describe, expect, it } from "vitest";
-import { installDom } from "../../engine/test/testDom";
+import { installDom } from "../../engine/test/test-dom";
 import { drillMetric, drillPlaceOf, drillQuestions, isWhen, type DrillTarget } from "./drill";
 
 beforeAll(() => installDom());

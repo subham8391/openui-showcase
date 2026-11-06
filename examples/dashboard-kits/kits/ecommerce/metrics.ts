@@ -5,7 +5,7 @@ import {
 } from "../../engine/metrics";
 import type { Definition } from "../../engine/schemas";
 
-// Every metric the e-commerce tools return, defined once (see core/metrics.ts).
+// Every metric the e-commerce tools return, defined once (see engine/metrics.ts).
 
 const PERIOD = "Selected period, against the period before";
 const YEAR = "Last 12 months, against the 12 before";

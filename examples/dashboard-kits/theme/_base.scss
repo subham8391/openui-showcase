@@ -224,7 +224,7 @@
   flex: 1 1 auto;
 }
 /* A row whose cards differ too much in height for any chart to make up
-   (see core/library/rowBalance.ts): every card takes the full width instead. */
+   (see engine/library/row-balance.ts): every card takes the full width instead. */
 .kit-theme .openui-dashboard-card-row.kit-row--stacked > .openui-dashboard-shell-card {
   flex: 1 1 100%;
 }

@@ -4,7 +4,7 @@ import { Renderer } from "@openuidev/react-lang";
 import { useEffect, useRef, useState } from "react";
 import { DrillProvider } from "../blocks/Drill";
 import { RunDetails } from "./run-details";
-import { useKitRenderer } from "./use-kit-renderer";
+import { useKitRenderer } from "./useKitRenderer";
 
 export function GalleryView({
   kitId,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { useLayoutEffect, useRef } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
-import { installDom, mount, runFrames } from "../../../engine/test/testDom";
+import { installDom, mount, runFrames } from "../../../engine/test/test-dom";
 import { createDataMorph } from "./dataMorph";
 import { springPresets } from "./presets";
 import { activeTickCount } from "./ticker";

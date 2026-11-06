@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { DrillProvider } from "../../blocks/Drill";
-import { installDom, mount } from "../../engine/test/testDom";
+import { installDom, mount } from "../../engine/test/test-dom";
 import { ColumnChart } from "./ColumnChart";
 import type { ColumnChartProps } from "./types";
 

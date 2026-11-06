@@ -5,7 +5,7 @@ import {
 } from "../../engine/metrics";
 import type { Definition } from "../../engine/schemas";
 
-// Every metric the analytics tools return, defined once (see core/metrics.ts).
+// Every metric the analytics tools return, defined once (see engine/metrics.ts).
 // The basis carries the active rule, so every number says how it counted.
 // The prompt's glossary keeps the user-level metrics; account metrics carry
 // their definitions on each KPI.

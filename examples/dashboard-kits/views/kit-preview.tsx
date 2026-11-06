@@ -1,7 +1,7 @@
 "use client";
 
 import { Renderer } from "@openuidev/react-lang";
-import { useKitRenderer } from "./use-kit-renderer";
+import { useKitRenderer } from "./useKitRenderer";
 
 /** One gallery dashboard rendered as it is in the gallery, for previews elsewhere. */
 export function KitPreview({ kitId, index = 0 }: { kitId: string; index?: number }) {

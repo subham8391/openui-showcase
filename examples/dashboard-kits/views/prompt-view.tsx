@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { KITS } from "../kits";
 import { KIT_LIBRARIES } from "../kits/client";
-import { API } from "./use-kit-renderer";
+import { API } from "./useKitRenderer";
 
 export function PromptView({ kitId }: { kitId: string }) {
   const kit = KITS.find((k) => k.id === kitId)!;

@@ -2,7 +2,7 @@
 import { act } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Kpi } from "../../engine/schemas";
-import { installDom, mount, runFrames } from "../../engine/test/testDom";
+import { installDom, mount, runFrames } from "../../engine/test/test-dom";
 import { KpiStrip } from "./KpiStrip";
 
 beforeAll(() => installDom());

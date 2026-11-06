@@ -5,7 +5,7 @@
 import type { ComponentType } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
 import { ShareBar } from "../blocks/ShareBar";
-import { installDom, mount, runFrames } from "../engine/test/testDom";
+import { installDom, mount, runFrames } from "../engine/test/test-dom";
 import { ColumnChart } from "./ColumnChart";
 import { GoalPace } from "./GoalPace";
 import { ProfitWaterfall } from "./ProfitWaterfall";

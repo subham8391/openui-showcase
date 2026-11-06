@@ -1,7 +1,7 @@
 // The browser's side of OpenUI Dashboards for a kit: where its token,
 // interpreter, create and edit routes live (app/dashboard-kits/api/cloud/).
 
-import { API } from "./use-kit-renderer";
+import { API } from "./useKitRenderer";
 
 /** A kit's cloud routes. */
 export function cloudRoutes(kitId: string) {
