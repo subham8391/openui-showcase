@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { scaleBand, scaleLinear } from "d3-scale";
 import { pointer } from "d3-selection";
 import { memo, useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
-import { useDrill } from "../../blocks/Drill";
 import { useChartHover, useContainerSize, useIsomorphicLayoutEffect } from "../../engine/hooks";
+import { useDrill } from "../../ui/Drill";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { FadeFollower, springPresets, useDataMorph } from "../shared/spring";
 import { FILL_MAX_HEIGHT, KIT_CHART_PREFIX } from "../utils/constants";
@@ -162,7 +162,7 @@ function ProfitWaterfallImpl({
   const shown = hover.restingIndex ?? 0;
   const pad = (band.step() - band.bandwidth()) / 2;
 
-  // Dig-in (see blocks/Drill): a click on a step, or Enter on the focused
+  // Dig-in (see ui/Drill): a click on a step, or Enter on the focused
   // chart, offers questions about that step by its own name ("Why was Web
   // +$316?"), with the same step in the comparison when there is one. Only
   // where the page can generate (a DrillProvider above).

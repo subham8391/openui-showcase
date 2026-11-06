@@ -2,7 +2,7 @@ import type { MouseEvent } from "react";
 import { formatValue } from "../../charts/utils/format";
 import { formatChange, formatPercent } from "../../engine/format";
 import type { Item, ValueFormat } from "../../engine/schemas";
-import { useDrill } from "../Drill";
+import { useDrill } from "../../ui/Drill";
 
 /** The filter value that means "no selection" for the kits' dashboard filters. */
 export const ALL = "all";
@@ -29,7 +29,7 @@ const isOther = (name: string) => /^other\b/i.test(name);
  * A ranked list of labeled horizontal bars with each value and its change or
  * share. Rows can drive a dashboard filter: the chosen row stays bright and
  * the rest fade. Where the page can generate, the other rows ask about
- * themselves when clicked (see blocks/Drill).
+ * themselves when clicked (see ui/Drill).
  */
 export function BarList({ items, format, limit = 8, caption, selected, onSelect }: BarListProps) {
   // Dig-in: a row that doesn't filter is a button that offers questions

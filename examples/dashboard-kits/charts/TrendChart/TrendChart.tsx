@@ -12,9 +12,9 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { useDrill } from "../../blocks/Drill";
 import { changeTone, formatChange } from "../../engine/format";
 import { useChartHover, useContainerSize, useKitPalette, useSeriesFocus } from "../../engine/hooks";
+import { useDrill } from "../../ui/Drill";
 import { ChartCrosshair, ChartLegend, ChartTooltip, type LegendGuide } from "../shared";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { linePatterns } from "../shared/linePatterns";
@@ -227,7 +227,7 @@ function TrendChartImpl({
     : null;
   const readoutChange = span ? summarizeSelection(primaryValues, span, format)?.change : undefined;
 
-  // Dig-in (see blocks/Drill): a click on a day, or Enter on the focused
+  // Dig-in (see ui/Drill): a click on a day, or Enter on the focused
   // chart, offers questions about that day; inside a selected range, about
   // the range. Only where the page can generate (a DrillProvider above).
   const drill = useDrill();

@@ -5,10 +5,10 @@
 import { defineComponent } from "@openuidev/react-lang";
 import { z } from "zod/v4";
 import { Pending } from "../../../blocks/Pending/Pending.definition";
-import { ScrollRegion } from "../../../blocks/ScrollRegion";
 import { Sparkline } from "../../../charts/Sparkline";
 import { formatCurrency, formatNumber, formatPercent } from "../../../engine/format";
 import { passed } from "../../../engine/schemas";
+import { ScrollRegion } from "../../../ui/ScrollRegion";
 import { type MarketingChannel, Change } from "./shared";
 
 export const ChannelPerformance = defineComponent({

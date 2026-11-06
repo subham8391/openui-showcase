@@ -4,9 +4,9 @@ import { Sparkline } from "../../charts/Sparkline";
 import { changeTone } from "../../engine/format";
 import { useContainerSize } from "../../engine/hooks";
 import type { Kpi } from "../../engine/schemas";
-import { DefinitionTip } from "../DefinitionTip";
-import { DeltaPill } from "../DeltaPill";
-import { RollingNumber } from "../RollingNumber";
+import { DefinitionTip } from "../../ui/DefinitionTip";
+import { DeltaPill } from "../../ui/DeltaPill";
+import { RollingNumber } from "../../ui/RollingNumber";
 import { kpiColumns } from "./kpiLayout";
 import { formatLike, sparkPoints, sparkVariant, tileDay } from "./kpiSpark";
 

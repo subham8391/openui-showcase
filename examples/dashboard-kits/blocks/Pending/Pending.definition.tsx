@@ -1,7 +1,7 @@
 import { useIsQueryLoading, useIsStreaming } from "@openuidev/react-lang";
 import { useEffect, useState } from "react";
 import { useRowBalance } from "../../engine/library/row-balance";
-import { EmptyState, Skeleton, type SkeletonKind } from "../States";
+import { EmptyState, Skeleton, type SkeletonKind } from "../../ui/States";
 
 /**
  * What a component without data shows: a skeleton while the dashboard streams

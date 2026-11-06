@@ -1,6 +1,6 @@
 import { formatCurrency, formatNumber } from "../../engine/format";
 import type { CohortRow } from "../../engine/schemas";
-import { ScrollRegion } from "../ScrollRegion";
+import { ScrollRegion } from "../../ui/ScrollRegion";
 
 /**
  * A single-hue sequential fill: the accent mixed into the card, so low values

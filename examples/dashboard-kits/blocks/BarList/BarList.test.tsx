@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { installDom, mount } from "../../engine/test/test-dom";
-import { DrillProvider } from "../Drill";
+import { DrillProvider } from "../../ui/Drill";
 import { BarList, type BarListProps } from "./BarList";
 
 beforeAll(() => installDom());

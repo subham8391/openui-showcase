@@ -1,10 +1,10 @@
 import { useId } from "react";
 import { TrendChart } from "../../charts/TrendChart";
 import type { Kpi, Trend } from "../../engine/schemas";
-import { DefinitionTip } from "../DefinitionTip";
-import { DeltaPill } from "../DeltaPill";
+import { DefinitionTip } from "../../ui/DefinitionTip";
+import { DeltaPill } from "../../ui/DeltaPill";
+import { RollingNumber } from "../../ui/RollingNumber";
 import { UsualNote } from "../KpiStrip/KpiStrip";
-import { RollingNumber } from "../RollingNumber";
 
 export interface HeroMetricProps {
   /** The headline metric. */

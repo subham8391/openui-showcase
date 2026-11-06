@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { scaleBand } from "d3-scale";
 import { pointer } from "d3-selection";
 import { useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
-import { useDrill } from "../../blocks/Drill";
 import { useChartHover, useContainerSize } from "../../engine/hooks";
+import { useDrill } from "../../ui/Drill";
 import { ChartTooltip } from "../shared";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { FadeFollower } from "../shared/spring";
@@ -102,7 +102,7 @@ function HeatGridImpl({
   const hover = useChartHover(count);
   const handlers = hover.createHandlers(findIndex);
 
-  // Dig-in (see blocks/Drill): a click on a cell, or Enter on the focused
+  // Dig-in (see ui/Drill): a click on a cell, or Enter on the focused
   // grid, offers questions about that cell, measured in the grid's unit.
   // Only where the page can generate (a DrillProvider above).
   const drill = useDrill();

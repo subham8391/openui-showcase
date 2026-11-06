@@ -6,10 +6,10 @@ import { defineComponent } from "@openuidev/react-lang";
 import { Fragment, useId, useState } from "react";
 import { z } from "zod/v4";
 import { Pending } from "../../../blocks/Pending/Pending.definition";
-import { ScrollRegion } from "../../../blocks/ScrollRegion";
 import { Sparkline } from "../../../charts/Sparkline";
 import { formatCurrency, formatNumber } from "../../../engine/format";
 import { passed } from "../../../engine/schemas";
+import { ScrollRegion } from "../../../ui/ScrollRegion";
 import type { Account } from "./shared";
 
 function HealthRing({ score }: { score: number }) {

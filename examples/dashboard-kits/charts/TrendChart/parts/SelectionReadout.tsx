@@ -33,7 +33,7 @@ export function SelectionReadout({
   change?: number;
   compare?: "up" | "down" | "neutral";
   /**
-   * Offers questions about the range (see blocks/Drill), from a button at the
+   * Offers questions about the range (see ui/Drill), from a button at the
    * readout's end. Mouse only: the chart's Enter key does the same.
    */
   onAsk?: (where: { x: number; y: number }) => void;

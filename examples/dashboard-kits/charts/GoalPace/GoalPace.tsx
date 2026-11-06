@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { RollingNumber } from "../../blocks/RollingNumber";
 import { formatPercent } from "../../engine/format";
+import { RollingNumber } from "../../ui/RollingNumber";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { KIT_CHART_PREFIX } from "../utils/constants";
 import { formatValue } from "../utils/format";

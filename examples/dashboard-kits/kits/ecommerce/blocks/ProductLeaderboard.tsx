@@ -4,11 +4,11 @@
 
 import { defineComponent } from "@openuidev/react-lang";
 import { z } from "zod/v4";
-import { DeltaPill } from "../../../blocks/DeltaPill";
 import { Pending } from "../../../blocks/Pending/Pending.definition";
 import { Sparkline } from "../../../charts/Sparkline";
 import { formatCurrency, formatNumber } from "../../../engine/format";
 import { passed } from "../../../engine/schemas";
+import { DeltaPill } from "../../../ui/DeltaPill";
 import { type Product, Monogram, STOCK_TONE } from "./shared";
 
 export const ProductLeaderboard = defineComponent({

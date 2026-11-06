@@ -36,7 +36,7 @@
   }
 
   // Where the page can generate, a click on a step asks about it (see
-  // blocks/Drill): the bars and the band behind the hovered one.
+  // ui/Drill): the bars and the band behind the hovered one.
   &-frame--drill &-bar,
   &-frame--drill &-hover-band {
     cursor: pointer;

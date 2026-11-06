@@ -1,10 +1,6 @@
-// Every plain component's styles. Each component keeps its sheet next to its code.
-@forward "./DeltaPill/deltaPill";
-@forward "./RollingNumber/rollingNumber";
-@forward "./States/states";
+// Every shared block's styles. Each block keeps its sheet next to its code.
 @forward "./HeroMetric/heroMetric";
 @forward "./KpiStrip/kpiStrip";
-@forward "./DefinitionTip/definitionTip";
 @forward "./RuleChips/ruleChips";
 @forward "./BulletList/bulletList";
 @forward "./DataStatus/dataStatus";
@@ -14,4 +10,3 @@
 @forward "./CohortGrid/cohortGrid";
 @forward "./BarList/barList";
 @forward "./ShareBar/shareBar";
-@forward "./Drill/drill";

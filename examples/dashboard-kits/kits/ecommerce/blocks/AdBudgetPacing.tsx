@@ -4,12 +4,12 @@
 
 import { defineComponent } from "@openuidev/react-lang";
 import { z } from "zod/v4";
-import { PaceCell } from "../../../blocks/PaceCell";
 import { Pending } from "../../../blocks/Pending/Pending.definition";
-import { ScrollRegion } from "../../../blocks/ScrollRegion";
 import { BurnDown } from "../../../charts/BurnDown";
 import { formatCurrency } from "../../../engine/format";
 import { passed } from "../../../engine/schemas";
+import { PaceCell } from "../../../ui/PaceCell";
+import { ScrollRegion } from "../../../ui/ScrollRegion";
 
 interface AdBudget {
   name: string;

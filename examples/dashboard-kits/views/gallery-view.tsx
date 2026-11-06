@@ -2,7 +2,7 @@
 
 import { Renderer } from "@openuidev/react-lang";
 import { useEffect, useRef, useState } from "react";
-import { DrillProvider } from "../blocks/Drill";
+import { DrillProvider } from "../ui/Drill";
 import { RunDetails } from "./run-details";
 import { useKitRenderer } from "./useKitRenderer";
 

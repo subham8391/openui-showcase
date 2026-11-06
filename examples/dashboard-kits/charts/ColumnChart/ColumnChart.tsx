@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { scaleBand } from "d3-scale";
 import { pointer } from "d3-selection";
 import { memo, useCallback, useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
-import { useDrill } from "../../blocks/Drill";
 import {
   useChartHover,
   useContainerSize,
@@ -10,6 +9,7 @@ import {
   useKitPalette,
   useSeriesFocus,
 } from "../../engine/hooks";
+import { useDrill } from "../../ui/Drill";
 import { ChartLegend, ChartTooltip, colorSeries, paletteCount } from "../shared";
 import { ChartEmpty } from "../shared/ChartEmpty";
 import { FadeFollower, springPresets, useDataMorph } from "../shared/spring";
@@ -162,7 +162,7 @@ function ColumnChartImpl({
   const center = (j: number) => band(j)! + band.bandwidth() / 2;
   const baseY = y(0);
 
-  // Dig-in (see blocks/Drill): a click on a column, or Enter on the focused
+  // Dig-in (see ui/Drill): a click on a column, or Enter on the focused
   // chart, offers questions about that column's bar: the segment or bar
   // under the pointer in a stack or group, else the first series with a
   // value there. Only where the page can generate (a DrillProvider above).

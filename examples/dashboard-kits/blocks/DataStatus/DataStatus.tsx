@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { HoverTip } from "../KitLayer";
+import { HoverTip } from "../../ui/KitLayer";
 
 export interface DataStatusItem {
   label: string;

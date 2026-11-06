@@ -26,7 +26,7 @@
   }
 
   // Where the page can generate, a click on a column asks about it (see
-  // blocks/Drill): the columns and the band behind the hovered one.
+  // ui/Drill): the columns and the band behind the hovered one.
   &-frame--drill &-col,
   &-frame--drill &-hover-band {
     cursor: pointer;

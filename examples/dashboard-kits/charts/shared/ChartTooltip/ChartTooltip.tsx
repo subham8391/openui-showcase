@@ -1,6 +1,6 @@
 import { useCallback, useRef, type ReactNode } from "react";
-import { clampToWindow, KitLayer, positionedParent } from "../../../blocks/KitLayer";
 import { useIsomorphicLayoutEffect } from "../../../engine/hooks/useIsomorphicLayoutEffect";
+import { clampToWindow, KitLayer, positionedParent } from "../../../ui/KitLayer";
 import { ChartKey, type ChartKeyShape } from "../ChartLegend/ChartKey";
 import { springPresets, useTranslate } from "../spring";
 

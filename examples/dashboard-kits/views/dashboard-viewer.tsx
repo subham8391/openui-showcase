@@ -7,7 +7,7 @@ import {
   useArtifactUpdate,
 } from "@openuidev/react-ui/cloud";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { DrillProvider } from "../blocks/Drill";
+import { DrillProvider } from "../ui/Drill";
 import { cloudRoutes } from "./cloud";
 
 /** The dashboard the viewer shows: by its create or edit response, else by id. */

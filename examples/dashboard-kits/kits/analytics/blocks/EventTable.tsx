@@ -5,9 +5,9 @@
 import { defineComponent } from "@openuidev/react-lang";
 import { z } from "zod/v4";
 import { Pending } from "../../../blocks/Pending/Pending.definition";
-import { ScrollRegion } from "../../../blocks/ScrollRegion";
 import { formatChange, formatNumber } from "../../../engine/format";
 import { passed } from "../../../engine/schemas";
+import { ScrollRegion } from "../../../ui/ScrollRegion";
 import type { TrackedEvent } from "./shared";
 
 export const EventTable = defineComponent({
