@@ -84,7 +84,7 @@ app/                        routes only: thin files that import from examples/
                             interpreter), prompt, tools
 examples/
   dashboard-kits/           everything about this example (see its README)
-    views/  kits/  blocks/  charts/  engine/  theme/  scripts/
+    views/  kits/  blocks/  charts/  ui/  engine/  theme/  scripts/
 shared/                     used by every example
   ui/                       site shell, landing page, scaled previews
   server/                   openui.ts (OpenUI Cloud client), visitor.ts (anonymous
@@ -93,6 +93,14 @@ shared/                     used by every example
 ```
 
 Imports use the `@/` alias for the repository root, for example `@/examples/dashboard-kits/kits/registry`.
+
+Naming:
+
+- **Routes** follow Next.js: lowercase folders under `app/`, `[param]` for dynamic segments, `page.tsx` and `route.ts`.
+- **App code** (`views/`, `engine/`, `scripts/`, `shared/`) uses kebab-case files, such as `tool-provider.ts`.
+- **React components** in `blocks/`, `charts/`, `ui/`, and `kits/*/blocks/` follow react-ui's convention: one PascalCase folder per component, `Component.tsx`, `Component.definition.tsx` for its openui-lang definition, camelCase helpers and stylesheets next to it.
+- **Hooks** are named after the hook, such as `useKitRenderer.ts`.
+- **Tests** sit next to the file they test, as `*.test.ts` or `*.test.tsx`.
 
 ## Add an example
 

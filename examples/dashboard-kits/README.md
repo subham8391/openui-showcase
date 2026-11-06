@@ -83,8 +83,9 @@ The base components come from `library` in `@openuidev/dashboard-library`. `crea
 
 ```
 examples/dashboard-kits/
-  views/        the page: workspace (kit switch and tabs), gallery, generate (run card and
-                full-page viewer), prompt, run details, and their styles
+  views/        the page: workspace (kit switch and tabs), gallery, generate (form, full-page
+                viewer, your dashboards), prompt, run details, and their styles;
+                cloud-routes.ts calls the OpenUI Dashboards routes from the browser
   kits/
     ecommerce/  the e-commerce kit: kit.ts (prompt and gallery), library.ts, tools.ts,
                 metrics.ts, data/ (the sample store by topic; handlers.ts for the tools),
@@ -94,10 +95,14 @@ examples/dashboard-kits/
     registry.ts KITS, getKit, and the sample-data handlers (server-safe, no React)
     libraries.ts  client.ts  server.ts   each kit's library, the Renderer's tool provider,
                 and the server's specs, prompts, and tool runs
+    cloud.ts    each kit as an OpenUI defineDashboard (server only)
     specs/      entries for `openui generate`; generated/ holds the output
-  blocks/       one folder per shared block: its React component, its openui-lang
+  blocks/       one folder per shared openui-lang block: its React component, its
                 definition (<Block>.definition.tsx), styles, and tests
   charts/       one folder per d3 chart, the same pattern
+  ui/           internal UI pieces the model never places: Drill (the dig-in menu),
+                KitLayer (popups), ScrollRegion, States (skeletons, empty states),
+                DeltaPill, RollingNumber, DefinitionTip, PaceCell
   engine/       kit contract, prompt assembly, schemas, formats, stats, tool provider,
                 the why math, library assembly (library/), hooks, test helpers
   theme/        theme tokens and base styles (the kits' Sass entry is theme/index.scss)

@@ -131,9 +131,11 @@ examples/dashboard-kits/
   kits/         ecommerce/ and analytics/ (kit.ts, library.ts, tools.ts, metrics.ts, data/, blocks/),
                 registry.ts (KITS, handlers; no React), libraries.ts, client.ts, server.ts,
                 cloud.ts (each kit as an OpenUI defineDashboard), specs/
-  blocks/       one folder per shared block: component, <Block>.definition.tsx, styles, tests;
-                Drill/ is the dig-in menu
+  blocks/       one folder per shared openui-lang block: component, <Block>.definition.tsx,
+                styles, tests
   charts/       one folder per d3 chart, the same pattern
+  ui/           internal UI pieces the model never places (Drill, the dig-in menu; KitLayer;
+                ScrollRegion; States; DeltaPill; RollingNumber; DefinitionTip; PaceCell)
   engine/       schemas, kit contract (kit.ts), prompt assembly (prompt.ts, base-prompt.ts),
                 tool provider, formats, stats, the why math, library/ (createKitLibrary), hooks/, test/
   theme/        theme tokens and base styles
