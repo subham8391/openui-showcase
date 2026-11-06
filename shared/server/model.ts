@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-// The key is read here and nowhere else. "server-only" makes the build fail if
+// The model client for the eval script. "server-only" makes the build fail if
 // this module is ever imported into code that runs in the browser.
 import "server-only";
 

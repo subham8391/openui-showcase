@@ -15,7 +15,7 @@ A kit is everything a model needs to build dashboards for one domain, on top of 
 
 A kit library has three layers:
 
-1. **Base:** the dashboard artifact's 48 components (`Dashboard`, `Section`, `CardRow`, cards, charts, filters, tables).
+1. **Base:** `library` from `@openuidev/dashboard-library`, 46 components in 6 groups (`Dashboard`, `Section`, `CardRow`, cards, charts, filters, tables). Each kit removes the 19 it replaces (the base charts, KPI cards, icon labels, and buttons), so 27 remain.
 2. **Shared analytics blocks**, which both kits use because every analytics product has them:
    - charts: `HeroMetric`, `TrendChart`, `ColumnChart`, `BarList`, `ShareBar`, and `GoalPace`;
    - blocks: `KpiStrip`, `InsightList`, `ConversionFunnel`, `CohortGrid`, and `Tracker`.
@@ -44,7 +44,7 @@ The kits copy what the tools people already use show, with the same metric names
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Demo business     | Sundial Goods: a direct-to-consumer brand selling apparel, footwear, accessories, and home goods through its online store, app, and Amazon                                                                                                                                                                                                                                                                                      | Relay: a team workspace app with Free, Team, and Business plans on web, iOS, and Android                                                                                                                                                                                                                                                                                                         |
 | Domain components | `MoneyBreakdown`, `ProfitWaterfall`, `ReconciliationCard`, `ChannelPerformance`, `CustomerSegments`, `SegmentFlow`, `ProductPerformance`, `ProductLeaderboard`, `ProductQuadrant`, `ExchangeMatrix`, `CreativeLeaderboard`, `InventoryAlerts`                                                                                                                                                                                   | `LifecycleChart`, `PowerUserCurve`, `EngagementMatrix`, `FeatureValue`, `FeatureAdoption`, `ActivityHeatmap`, `EventTable`, `UserPaths`, `ActivationMoments`, `ExperimentResults`, `AccountHealth`, `PaywallMatrix`, `CommitPacing`, `WeeklyReview`                                                                                                                                              |
-| Tools (31 and 27) | KPIs, explain a change, sales over time, breakdown, and by dimension, marketing, attribution reconciliation, profit bridge, annotations, promotion impact, purchase, checkout, and order journeys, customer KPIs, new vs returning, customer flow, cohorts, RFM segments, products, inventory, returns, targets, live view, creatives, actions, sale plan, sales goal, fulfillment SLA, recent orders, orders by hour, insights | Usage KPIs, explain a change, data status, annotations, active users, lifecycle, activation funnel and moment, retention cohorts and curves, stickiness, feature engagement, activity heatmap, top events, user paths, signups by source, signup goal, experiments, account health and activity, revenue retention, monetisation, usage commits, weekly review, actions, alert preview, insights |
+| Tools (31 and 28) | KPIs, explain a change, sales over time, breakdown, and by dimension, marketing, attribution reconciliation, profit bridge, annotations, promotion impact, purchase, checkout, and order journeys, customer KPIs, new vs returning, customer flow, cohorts, RFM segments, products, inventory, returns, targets, live view, creatives, actions, sale plan, sales goal, fulfillment SLA, recent orders, orders by hour, insights | Usage KPIs, explain a change, data status, annotations, active users, lifecycle, activation funnel and moment, retention cohorts and curves, stickiness, feature engagement, activity heatmap, top events, user paths, signups by source, signup goal, experiments, account health and activity, revenue retention, monetisation, usage commits, weekly review, actions, alert preview, insights |
 | Filters           | `$range`, `$compare` (previous period, last year, plan), `$channel`, `$category`, `$device`, `$customer`, attribution `$model`, `$promo`                                                                                                                                                                                                                                                                                        | `$range`, `$compare` (previous period, last year, plan), `$platform`, `$plan`, `$active` (core action or any event), retention mode and unit, experiment status, account plan and active rule, alert metric, drop, confirmation, quiet hours, and window                                                                                                                                         |
 | Dashboards        | Store overview · What changed and why · Marketing and profit · Customers and retention · Targets and pacing · Monday summary · Live · Black Friday Cyber Monday · Promotions · Merchandising and checkout                                                                                                                                                                                                                       | Product health · What changed and why · Activation · Retention and lifecycle · Accounts and revenue · Features and experiments · Monetisation · Weekly review · Alert check                                                                                                                                                                                                                      |
 
@@ -119,30 +119,29 @@ The galleries follow what well-regarded product dashboards do, checked against [
   - **GoalPace** shows progress toward the month's goal: a gauge of the share reached with a tick where the pace says it should be, whether the month is on pace and where it is projected to finish, what is needed per day, and the running total against the straight-line pace ([Shopify Targets][shopify-2026], [Mantine gauge][mantine-gauge]).
   - **Tracker** shows a strip of days against a target, each colored by whether it met it, with the day's figure on hover; the Merchandising dashboard uses it for orders shipped within 48 hours ([Tremor Tracker][tremor-tracker]).
   - **Breakdowns filter the dashboard.** Items carry the filter value they stand for (`key`); given the filter's `$binding`, selecting a channel in the share bar or a row in a bar list sets that filter, fades the other parts, and offers "Show all" to clear it ([PostHog][posthog-filters]).
-- **A designed dark mode.** The package's `src/theme/_theme.scss` defines every colour as a token on `.kit-theme`, with its own dark steps (not an inversion) for the page, cards, ink, the categorical slots, the ordinal funnel ramp, and status colours. The app's Light, Dark, and System switch sets the mode on the kit theme and on the base `ThemeProvider`.
+- **The OpenUI theme, light and dark.** `theme/_theme.scss` defines every kit colour as a `--kit-*` token on `.kit-theme`, and each one reads an `--openui-*` token, so surfaces, ink, borders, radii, fonts, status colours, and dark mode come from the active OpenUI theme, and a theme override restyles the kits too. Chart series take the theme's chart palette (`useKitPalette`), distributed around its middle step the way react-ui's charts do. The app's Light, Dark, and System switch sets the mode on react-ui's `ThemeProvider`, the dashboard library's `ThemeProvider`, and the kit theme.
 - **Type:** Geist for text and Geist Mono for event names and code, with tabular numbers wherever figures line up.
-
-| Token set   | Light                                                             | Dark                                                              |
-| ----------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Surfaces    | page `#f3f5f8`, card `#ffffff`                                    | page `#08090d`, card `#10131a`                                    |
-| Categorical | `#2a78d6 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #4a3aa7 #e34948` | `#3987e5 #d95926 #199e70 #c98500 #d55181 #008300 #9085e9 #e66767` |
-| Funnel ramp | `#104281 → #86b6ef`, darkest first                                | `#9ec5f4 → #184f95`, lightest first                               |
 
 ## Layout
 
 ```
 examples/dashboard-kits/
-  views/        the page: workspace, gallery, generate (run card and viewer), prompt
+  views/        the page: workspace, gallery, generate (form, dashboard viewer, your dashboards),
+                prompt, and cloud.ts (the browser's OpenUI Dashboards routes)
   kits/         ecommerce/ and analytics/ (kit.ts, library.ts, tools.ts, metrics.ts, data/, blocks/),
-                registry.ts (KITS, handlers; no React), libraries.ts, client.ts, server.ts, specs/
-  blocks/       one folder per shared block: component, <Block>.definition.tsx, styles, tests
+                registry.ts (KITS, handlers; no React), libraries.ts, client.ts, server.ts,
+                cloud.ts (each kit as an OpenUI defineDashboard), specs/
+  blocks/       one folder per shared block: component, <Block>.definition.tsx, styles, tests;
+                Drill/ is the dig-in menu
   charts/       one folder per d3 chart, the same pattern
   engine/       schemas, kit contract (kit.ts), prompt assembly (prompt.ts, base-prompt.ts),
                 tool provider, formats, stats, the why math, library/ (createKitLibrary), hooks/, test/
   theme/        theme tokens and base styles
   scripts/      check-kits.ts (contract check), smoke-kits.tsx (render smoke test), eval/
-app/dashboard-kits/        the page and its API routes (generate, prompt, tools)
-shared/server/model.ts     the model client; the only file that reads the key
+app/dashboard-kits/        the page and its API routes: cloud/<kit>/ (token, dashboards, edit,
+                           interpreter), prompt, tools
+shared/server/             openui.ts (OpenUI Cloud client), visitor.ts (anonymous visitor),
+                           model.ts (model client for the eval); the only files that read the key
 ```
 
 `kits/registry.ts` has the kit definitions, tool contracts, and sample-data handlers, and imports no React, so the API routes use it on the server. Each kit's `library.ts` has its library factory, used in the browser. `theme/index.scss` holds the theme and every component's styles; the root layout imports it.
@@ -151,7 +150,7 @@ The server never imports a library. `pnpm generate` writes each library's spec t
 
 ## How a kit extends the base library
 
-The base is `dashboardLibrary` from `@openuidev/thesys` 0.14.0, the same component set as Muse's dashboard plane. It is passed in, so the package does not depend on one base: `createEcommerceLibrary(base)` and `createAnalyticsLibrary(base)` call `createKitLibrary(base, definition)`.
+The base is `library` from `@openuidev/dashboard-library`. It is passed in, so the kits do not depend on one base: `createEcommerceLibrary(base)` and `createAnalyticsLibrary(base)` call `createKitLibrary(base, definition)`.
 
 **Containers must be widened.** `MediumCard` and `LargeCard` declare their children as a closed list. Adding a component to the library leaves it out of that list, so the prompt still says the cards cannot hold it. Each kit component therefore declares the cards it fits in:
 
@@ -162,7 +161,9 @@ components: [
 ];
 ```
 
-`createKitLibrary` rebuilds those cards with their child list extended and keeps their renderers. `CardRow` is unchanged, because kit components are card content, not cards.
+`createKitLibrary` passes them to OpenUI Lang 1.1's `library.extend()` as `{ component, slots: ["MediumCard.children", ...] }`, which widens those cards' child lists and keeps their renderers. `CardRow` is unchanged, because kit components are card content, not cards.
+
+**Replaced components are removed.** The same `extend()` call removes the 19 base components the kit replaces (`REPLACED_BASE`: the base charts, KPI cards, icon labels, and buttons), so the model never sees a component it should not use and the prompt stays within budget. `Icon` stays: `extend()` refuses to remove it.
 
 The client parser does not check placement. It only checks that a component exists: `PieChart` inside `LargeCard` parses without an error even though the schema forbids it. Placement comes from two places, which is why widening matters:
 
@@ -177,7 +178,7 @@ The client parser does not check placement. It only checks that a component exis
 
 **KPIs carry their direction.** Each KPI says whether up is good, bad, or neutral. `KpiStrip` therefore shows a falling CPA or a falling time-between-orders in green and a rise in MRR at risk in red. The base `SmallCard` trend always treats up as good.
 
-**The kit restores the base's prompt guidance.** The published 0.14.0 library has no component groups, so its prompt lists signatures but none of the layout rules from the genui-sdk source. `base-prompt.ts` carries those groups and rules until the base library ships with them.
+**The base's prompt guidance is kept.** The dashboard library ships its component groups and layout notes. `extend()` cannot add a group, so `createKitLibrary` rebuilds the library with `createLibrary`: the base groups, minus removed components and any note that names one, then the kit's own group. `base-prompt.ts` now holds only the shared rules (`BASE_RULES`, `DATA_RULES`, `COMPOSITION_RULES`).
 
 ## Prompt
 
@@ -190,7 +191,7 @@ Each kit's prompt is assembled from:
 - the kit's own rules: filters, metric definitions, which tool answers which question, and how to title cards;
 - the kit's example dashboards (two or three per kit; the rest of the gallery is for people, not the prompt).
 
-The e-commerce prompt is 63,981 characters, and the analytics prompt 63,976, against a budget of 64,000 for each that the site's `check` script enforces (the plans aimed for 60,000; the first two kits, fully built, settled just under 64,000). Tool outputs that only flow into a component are collapsed to `object` in the prompt (`.meta({ opaque })`), filter inputs read as `string`, component props that take a tool's items are loose records, and metrics define themselves once: the glossary lists the ones the model must reason about, and every KPI carries its own definition.
+This is the prompt the Prompt view shows; on OpenUI Dashboards, OpenUI Cloud builds the model's prompt from the same pieces (see Serving). The e-commerce prompt is 62,674 characters, and the analytics prompt 63,823, against a budget of 64,000 for each that the site's `check` script enforces (the plans aimed for 60,000; the first two kits, fully built, settled just under 64,000). Tool outputs that only flow into a component are collapsed to `object` in the prompt (`.meta({ opaque })`), filter inputs read as `string`, component props that take a tool's items are loose records, and metrics define themselves once: the glossary lists the ones the model must reason about, and every KPI carries its own definition.
 
 ## Data contract
 
@@ -208,23 +209,21 @@ The e-commerce prompt is 63,981 characters, and the analytics prompt 63,976, aga
 
 ## Serving
 
-### Now: self-hosted prompt (works today)
+Generate runs on [OpenUI Dashboards](https://www.openui.com/docs/dashboards) (`@openuidev/server` 0.4 and `@openuidev/react-ui/cloud` 0.18):
 
-1. The server builds the system prompt with `generateSystemPrompt({ ...spec, tools, preamble, additionalRules, toolExamples })`.
-2. `/dashboard-kits/api/generate` sends it, with the user's request, to OpenUI Gateway or any OpenAI-compatible endpoint, then streams the openui-lang back.
-3. The browser renders with the same kit library. Each `Query` goes through the Renderer's `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`.
+1. **Each kit is a `defineDashboard`** (`kits/cloud.ts`), with:
+   - `library`: the kit's generated spec;
+   - `tools`: the kit's tools as data tools, each with its description, its input JSON Schema, an example output from the sample data (every list cut to two items, since the model only needs the shape), and the sample-data handler;
+   - `promptOptions`: the preamble, the shared and kit rules, and as examples the three gallery dashboards closest to the request (`rankGallery`), or the kit's defaults;
+   - `model`: `OPENUI_DASHBOARD_MODEL`, default `anthropic/claude-sonnet-5.5`.
+2. **Create and edit.** `/dashboard-kits/api/cloud/<kit>/dashboards` calls `create`; OpenUI Cloud builds the dashboard, checks and repairs it against the library, and saves it. `…/edit` calls `edit`, which changes only what the request describes.
+3. **Render.** The browser streams the dashboard with `LiveArtifactRenderer` and the same kit library, inside `OpenUICloudProvider`. Its queries go to `…/interpreter`, which runs a kit tool on the sample data, or a script OpenUI generated in OpenUI's interpreter. "Your dashboards" uses the `useArtifactList`, `useArtifactPin`, `useArtifactUpdate`, and `useArtifactDelete` hooks.
+4. **One app per kit.** Each kit is its own `appId` (`showcase-<kit>`): the two kits share three tool names (`explain_change`, `get_annotations`, `get_actions`), and separate apps also keep each kit's dashboards apart.
+5. **No sign-in.** Each browser is an anonymous visitor: a random id in a signed, HTTP-only cookie (`shared/server/visitor.ts`). `…/token` gives it a short-lived frontend token for its own dashboards only, and the key stays on the server.
 
-### Target: OpenUI Cloud managed config
+The gallery does not use the cloud: its Queries go through the Renderer's `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`.
 
-`generateSystemPrompt({ cloud: true, library: spec, promptOptions })` sends the kit's library, preamble, rules, and examples to Muse, and Muse builds the prompt (path 4, `chatLibrary`). Muse's limit is 400,000 characters, so a kit fits.
-
-Two gaps block this today:
-
-1. **Tools are not on the Cloud wire.** `CloudPromptOptions` carries only `examples`, `preamble`, and `additionalRules`, so the model is never told which tools `Query()` can call. There are three options:
-   - add `tools` to the Cloud config and Muse's path 4;
-   - reuse muse#612's script tool definitions;
-   - pass the tool list as `instructions` text.
-2. **Muse's dashboard plane uses a fixed library.** `thesys_generate_dashboard` loads a prompt and schema compiled into Muse, so a kit cannot reach it without a Muse change.
+The two gaps an earlier draft listed are closed: tools now reach the model as data tools, and a kit's own library replaces the fixed dashboard library.
 
 ## Where kits live
 
@@ -232,36 +231,36 @@ The kits are part of the showcase app, in `examples/dashboard-kits/`, not a sepa
 
 ## Base library findings
 
-These are not kit bugs. Each one affects anyone who builds on the dashboard artifact.
+These are not kit bugs. Each one affects anyone who builds on the dashboard artifact. They were found on `@openuidev/thesys` 0.14.0, before the site moved to `@openuidev/dashboard-library` 0.0.1. Findings 1, 6, and 9 are fixed by that move; the others have not been re-checked on the new library, and finding 4 is still worked around.
 
-1. The published `dashboardLibrary` (0.14.0) has no component groups, so its prompt has none of the source's layout rules.
+1. **Fixed.** The published `dashboardLibrary` (0.14.0) has no component groups, so its prompt has none of the source's layout rules. The dashboard library ships 6 groups.
 2. The client parser accepts components in containers whose schema forbids them.
 3. `Col(label, data, "number")` renders raw, left-aligned numbers (8734327), although the base rules say number columns are right-aligned.
 4. `FilterBar` never wraps (`flex-wrap: nowrap`), so a bar with three filters makes the page 572px wide on a 375px phone. The kit theme (`theme/_theme.scss`) adds a wrap override.
 5. On first render, every `Query` that reads a `$binding` fires twice with identical arguments, in development and in production; a `Query` with no bindings fires once. The Store overview makes 14 calls for 7 queries. This matches the react-lang `useOpenUIState` double fetch found in the dashboard QA.
-6. Next.js production builds break with `@openuidev/thesys` 0.14.0. SWC re-minifies the already minified bundle and emits a duplicate `let` (`Identifier 'i' has already been declared`). The server chunk then fails to prerender and the matching browser chunk fails to parse, with both Turbopack and webpack. The site sets `experimental.turbopackMinify: false`.
+6. **Fixed** (the site no longer sets `turbopackMinify: false`). Next.js production builds break with `@openuidev/thesys` 0.14.0. SWC re-minifies the already minified bundle and emits a duplicate `let` (`Identifier 'i' has already been declared`). The server chunk then fails to prerender and the matching browser chunk fails to parse, with both Turbopack and webpack. The site sets `experimental.turbopackMinify: false`.
 7. A collapsed card, `MediumCard(children, true)`, renders as an empty 38px strip when its row wraps (seen at about 950px wide): the content is clipped and no Expand control shows. The gallery does not collapse cards.
 8. The base `SmallCard` and `MetricIndicator` trends always treat up as good, so a falling CPA shows red. `KpiStrip` takes a good direction per metric.
-9. `@openuidev/thesys` 0.14.0 requires `react-ui` and `react-headless` ^0.14. The app uses 0.17.1 (the kits need react-ui 0.17) through pnpm `overrides` in the root `package.json`; all eight dashboards render with no errors, but a `thesys` release on 0.17 would remove the override.
+9. **Fixed** (the react-ui and react-headless overrides are gone). `@openuidev/thesys` 0.14.0 requires `react-ui` and `react-headless` ^0.14. The app uses 0.17.1 (the kits need react-ui 0.17) through pnpm `overrides` in the root `package.json`; all eight dashboards render with no errors, but a `thesys` release on 0.17 would remove the override.
 10. The base charts cannot be themed from outside. `DashboardThemeProvider` nests its own `ThemeProvider` inside every dashboard, and the charts read their palettes from that JavaScript context, so neither CSS variables nor an outer `ThemeProvider` reach them. The kits draw their own d3 charts, which take series colours from the active theme's chart palette (`useKitPalette`), and the kit prompts steer the model away from the base `LineChart`, `AreaChart`, `BarChart`, and `PieChart`.
 11. react-ui charts take no value formatter: ticks are abbreviated numbers with no unit, so a sales axis reads 12K rather than $12K and a rate cannot show %. The kits name the unit in the axis label ("Sales (USD)") and keep currency and percentage trends on their own `TrendChart`.
 12. react-ui reorders a categorical `customPalette`: `getDistributedColors` takes colours outward from the middle of the palette, so series do not get the colours in the order given. The kit charts no longer go through react-ui's charts: `useKitPalette` takes colours from the theme's ramp the same way (`distributeColors`, centred on the ramp's middle step), so a theme recolours kit and react-ui charts alike.
 13. react-ui's chart motion is internal: the spring and data morph, `FadeFollower`, `useSeededAim`, `useTranslate`, `AnimatedPath`, the line crosshair, and the d3 series geometry are not exported, so the kit ports them (`charts/shared`, with tests and a note naming each source). Exporting them would let other packages build charts that move like react-ui's without a copy.
 14. A react-ui chart's entrance runs only once, on mount: on a filter change `BarChart` bars snap to their new heights. (An earlier draft of this document reported a bar stuck at zero height after its entrance; that was a capture taken mid-animation. All 240 animated bars on the Merchandising dashboard finish at full height.)
 
-15. A streamed `$variable` default can lock in half-received. Mid-stream the parser reports `$range = "3` as `"3"` (and `$range = "` as `""`), and react-lang's store applies a declared default only to a key it has not seen, so the finished `"30d"` never replaces it. The filter then shows no selection and every Query reading it fails validation. It depends on where the network chunks split, so it is intermittent; replaying a failing program one character at a time reproduces it every time. The Generate view holds back an unfinished `$` declaration line until its newline arrives, and the prompt asks for declarations before first use. A fix belongs in react-lang: initialize state from completed statements only, or let a declaration update a default the user has not changed.
+15. A streamed `$variable` default can lock in half-received. Mid-stream the parser reports `$range = "3` as `"3"` (and `$range = "` as `""`), and react-lang's store applies a declared default only to a key it has not seen, so the finished `"30d"` never replaces it. The filter then shows no selection and every Query reading it fails validation. It depends on where the network chunks split, so it is intermittent; replaying a failing program one character at a time reproduces it every time. The earlier Generate view held back an unfinished `$` declaration line until its newline arrived; Generate now streams through OpenUI's `LiveArtifactRenderer`, which has not been re-checked for this. The prompt still asks for declarations before first use. A fix belongs in react-lang: initialize state from completed statements only, or let a declaration update a default the user has not changed.
 
 ## Open questions
 
 1. One "e-commerce analytics" kit, or separate e-commerce and analytics kits? This draft builds two, sharing four analytics blocks.
-2. Should the base be `@openuidev/thesys` (published, source not public) or a revived react-ui dashboard library (#1292)?
+2. ~~Should the base be `@openuidev/thesys` (published, source not public) or a revived react-ui dashboard library (#1292)?~~ Settled: `@openuidev/dashboard-library`.
 3. Should the shared blocks (`KpiStrip`, `InsightList`, `ConversionFunnel`, `CohortGrid`) move into the base dashboard library itself?
-4. How should tools reach the model under Cloud managed config?
+4. ~~How should tools reach the model under Cloud managed config?~~ Settled: as OpenUI Dashboards data tools (see Serving).
 5. Should the kits become a package of their own, or one package each? Who owns kit component design?
 6. Should kits ship connectors to real data, such as Shopify, GA4, or PostHog, or only the tool contract?
 7. Should the kit chart family and its theme tokens replace the base charts, so every dashboard gets them?
 
-Not in this draft: mutations (`ActionCards` approve and dismiss only write to the card's own log), editing a generated dashboard, persistence, and authentication.
+Not in this draft: mutations (`ActionCards` approve and dismiss only write to the card's own log) and sign-in. Editing and saving generated dashboards came with OpenUI Dashboards; visitors are anonymous, one per browser.
 
 ## Adding a kit
 

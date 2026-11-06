@@ -1,6 +1,17 @@
 # Dashboard kits
 
-Two kits for the OpenUI dashboard artifact. A kit is everything a model needs to build dashboards for one domain on top of the dashboard artifact's base library:
+Two dashboard kits running on [OpenUI Dashboards](https://www.openui.com/docs/dashboards). Each kit brings its own charts and data tools; ask a question in plain English and OpenUI builds a live dashboard from them, then saves it.
+
+**Try it:** https://openui-showcase.vercel.app/dashboard-kits (no sign-up)
+
+- **Ask** "Why did revenue drop in March?" and watch the dashboard build, in about 15 seconds.
+- **Dig in:** click any point on a chart, in the gallery or a generated dashboard, and pick "Why…?" or "Break down…". A new dashboard digs into that moment, and Back returns to where you were.
+- **Change it:** type what to change ("add a breakdown by country") and only that part updates.
+- **Come back:** "Your dashboards" keeps what you built, with live previews; pin, rename, or delete them.
+
+## What a kit is
+
+A kit is everything a model needs to build dashboards for one domain on top of OpenUI's base dashboard library:
 
 - **components**, placed into the base cards;
 - a **prompt**: preamble, definitions, rules, and worked gallery dashboards;
@@ -27,13 +38,13 @@ Both kits are modeled on the dashboards teams already use, with the same metric 
   - free to paid: the product-qualified funnel, Free plan limits, Business trials, and AI credit commits with their burn-down;
   - a 6-12 weekly business review, recommended actions to approve, and an alert back-test with N-of-M confirmation and quiet weekends.
 
-The e-commerce kit has 10 dashboards and 31 data tools and the analytics kit 9 and 27. They share a chart family (`HeroMetric`, `TrendChart`, `ColumnChart`, `BarList`, `ShareBar`, `HeatGrid`, `GoalPace`, `Tracker`, `VarianceWalk`, plus `SegmentFlow`, `QuadrantChart`, and `BurnDown` behind kit components) and blocks: `KpiStrip`, `InsightList`, `ConversionFunnel`, `CohortGrid`, `DriverCards`, `RuleChips`, `DataStatus`, `BulletList`, and `ActionCards`.
+The e-commerce kit has 10 dashboards and 31 data tools and the analytics kit 9 and 28. They share a chart family (`HeroMetric`, `TrendChart`, `ColumnChart`, `BarList`, `ShareBar`, `HeatGrid`, `GoalPace`, `Tracker`, `VarianceWalk`, plus `SegmentFlow`, `QuadrantChart`, and `BurnDown` behind kit components) and blocks: `KpiStrip`, `InsightList`, `ConversionFunnel`, `CohortGrid`, `DriverCards`, `RuleChips`, `DataStatus`, `BulletList`, and `ActionCards`.
 
 The page at `/dashboard-kits` has three views for each kit:
 
-- **Gallery** renders the kit's hand-written dashboards with live sample data. It needs no model or key.
-- **Generate** asks a model for a dashboard and streams it in: the skeleton shows below the form, then a full-page viewer opens once the model starts writing.
-- **Prompt** shows the system prompt the kit sends, with its components and tools.
+- **Gallery** renders the kit's hand-written dashboards with live sample data. It needs no model or key, except to dig into a chart point.
+- **Generate** asks OpenUI Dashboards for a dashboard and streams it in: a skeleton shows below the form, then a full-page viewer opens once the dashboard starts to appear. The viewer has a "Change it…" box, and every chart point in it can be dug into. "Your dashboards" sits below the form.
+- **Prompt** shows the kit's prompt assembled from its pieces (library, tools, rules, examples), the same pieces OpenUI Cloud builds the model's prompt from.
 
 [DESIGN.md](DESIGN.md) explains how kits extend the base library, the data contract, how kits are served, and the research behind them.
 
@@ -64,6 +75,7 @@ The gallery and the Prompt view work without credentials. Generate runs on [Open
 3. The browser streams and shows it with `LiveArtifactRenderer` and the same kit library. Its queries go to `…/interpreter`, which runs a kit tool on the sample data, or a script OpenUI generated in OpenUI's interpreter. "Your dashboards" lists, pins, renames, and deletes the visitor's saved dashboards with the `useArtifact*` hooks.
 4. Each kit is its own OpenUI app (`appId`), so its tokens and dashboards stay apart. There is no sign-in: each browser is an anonymous visitor, an id in a signed, HTTP-only cookie (`shared/server/visitor.ts`), and `…/token` gives it a short-lived frontend token for its own dashboards only. The key stays on the server.
 5. The **gallery** renders its hand-written dashboards with react-lang's `Renderer`. Each `Query()` runs through its `toolProvider` to `/dashboard-kits/api/tools/<kit>/<tool>`, which validates the arguments and the result against the tool's schemas. Filters are `$bindings`: changing one re-runs every Query that reads it.
+6. **Dig in** (`blocks/Drill/`): a click, tap, or Enter on a chart point, range, cell, or part opens a menu of questions about it, worded from the card, the metric, and the point ("Why was Total sales $48.2K on Sep 27?"), with the value before it for context. Picking one creates a dashboard for that question, and the viewer keeps a Back trail to the gallery or the dashboard it came from.
 
 The base components come from `library` in `@openuidev/dashboard-library`. `createEcommerceLibrary(library)` and `createAnalyticsLibrary(library)` use `library.extend()` to add a kit's components to `MediumCard` and `LargeCard` (so the prompt lists them as valid children), and remove the base charts and KPI cards the kit replaces.
 
@@ -96,7 +108,18 @@ The kits render in the OpenUI design system: inside react-ui's `ThemeProvider`, 
 
 ## Charts
 
-**Every chart is the kit's own, on d3.** `ColumnChart` (grouped, or stacked from zero with negative values below; the lifecycle chart, power user curve, and MRR movements use it), `HeatGrid` (the activity heatmap), the `ShareBar`, the period-over-period `TrendChart` (shaded gap, events, goal lines and benchmark bands, in-progress tail; lines far from zero fit their range, areas keep zero), `GoalPace`, `Tracker`, the KPI `Sparkline`, `ProfitWaterfall`, `SegmentFlow`, `QuadrantChart`, `SixTwelve`, and `BurnDown` all share one interaction model — a gliding hover follower and the shared tooltip, a legend that brings a series forward on hover and pins it on click, arrow keys — and react-ui's architecture: a hook-free empty-state dispatcher, an implementation with parts, d3 scales and d3-shape curves (react-ui's "natural" monotone curve), pure geometry with unit tests, react-ui's motion (a spring data morph so data changes glide, mounted hover followers so the crosshair, dots, and tooltip glide between points, and draw-on entrances), and a stylesheet per chart under the `kit` class prefix. Charts measure before their first paint and snap on resize, so only data changes animate.
+**Every chart is the kit's own, on d3:**
+
+- `TrendChart`: this period against the prior one, with the gap shaded, events, goal lines, benchmark bands, and an in-progress last point. Lines far from zero fit their range; areas keep zero.
+- `ColumnChart`: grouped, or stacked from zero with negative values below (the lifecycle chart, power user curve, and MRR movements use it).
+- `HeatGrid` (the activity heatmap), `ShareBar`, `GoalPace`, `Tracker`, the KPI `Sparkline`, `ProfitWaterfall`, `SegmentFlow`, `QuadrantChart`, `SixTwelve`, and `BurnDown`.
+
+They all work the same way:
+
+- **One interaction model:** a gliding hover follower and the shared tooltip, a legend that brings a series forward on hover and pins it on click, arrow keys, and a click on any point to dig in.
+- **react-ui's architecture:** a hook-free empty-state dispatcher, an implementation split into parts, d3 scales and d3-shape curves (react-ui's "natural" monotone curve), and pure geometry with unit tests.
+- **react-ui's motion:** a spring data morph so data changes glide, hover followers that stay mounted so the crosshair, dots, and tooltip glide between points, and draw-on entrances. Charts measure before their first paint and snap on resize, so only data changes animate.
+- **One stylesheet per chart**, under the `kit` class prefix.
 
 Where a react-ui chart was close but not a fit, the kit keeps its own:
 
