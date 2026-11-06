@@ -12,7 +12,7 @@ import {
   type ArtifactSummary,
 } from "@openuidev/react-ui/cloud";
 import { useEffect, useState } from "react";
-import { cloudRoutes } from "./cloud";
+import { cloudRoutes } from "./cloud-routes";
 
 /** Cards that draw a live thumbnail; the rest show their title only. */
 const THUMBNAILS = 6;

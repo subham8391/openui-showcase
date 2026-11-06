@@ -4,7 +4,7 @@ import { OpenUICloudProvider, type ArtifactSummary } from "@openuidev/react-ui/c
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KITS } from "../kits";
 import { KIT_LIBRARIES } from "../kits/client";
-import { artifactIdOf, cloudRoutes, createDashboard, editDashboard } from "./cloud";
+import { artifactIdOf, cloudRoutes, createDashboard, editDashboard } from "./cloud-routes";
 import { DashboardViewer, type ViewerRun } from "./dashboard-viewer";
 import { MyDashboards } from "./my-dashboards";
 

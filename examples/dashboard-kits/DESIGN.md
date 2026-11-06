@@ -127,7 +127,7 @@ The galleries follow what well-regarded product dashboards do, checked against [
 ```
 examples/dashboard-kits/
   views/        the page: workspace, gallery, generate (form, dashboard viewer, your dashboards),
-                prompt, and cloud.ts (the browser's OpenUI Dashboards routes)
+                prompt, and cloud-routes.ts (the browser's OpenUI Dashboards routes)
   kits/         ecommerce/ and analytics/ (kit.ts, library.ts, tools.ts, metrics.ts, data/, blocks/),
                 registry.ts (KITS, handlers; no React), libraries.ts, client.ts, server.ts,
                 cloud.ts (each kit as an OpenUI defineDashboard), specs/

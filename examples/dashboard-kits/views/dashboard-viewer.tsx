@@ -8,7 +8,7 @@ import {
 } from "@openuidev/react-ui/cloud";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { DrillProvider } from "../ui/Drill";
-import { cloudRoutes } from "./cloud";
+import { cloudRoutes } from "./cloud-routes";
 
 /** The dashboard the viewer shows: by its create or edit response, else by id. */
 export interface ViewerRun {
