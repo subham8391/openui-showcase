@@ -16,7 +16,14 @@ const KIT_ICONS: Record<string, string> = {
   analytics: "M4 20V10m6 10V4m6 16v-7m6 7V8",
 };
 
-export function KitWorkspace({ cloudUrl }: { cloudUrl: string }) {
+export function KitWorkspace({
+  cloudUrl,
+  canGenerate,
+}: {
+  cloudUrl: string;
+  /** False when the site has no key: Generate shows a paused notice and dig-in is off. */
+  canGenerate: boolean;
+}) {
   const [kitId, setKitId] = useState(KITS[0].id);
   const [view, setView] = useState<View>("gallery");
   // The gallery dashboard a link asked for (?kit=ecommerce&dashboard=2).
@@ -42,8 +49,9 @@ export function KitWorkspace({ cloudUrl }: { cloudUrl: string }) {
       <section className="kits-head">
         <h1>Dashboard kits</h1>
         <p>
-          Two domains a model can build dashboards in. Browse the gallery, generate one from a
-          sentence, or read the prompt the model gets.
+          {canGenerate
+            ? "Two domains a model can build dashboards in. Browse the gallery, generate one from a sentence, or read the prompt the model gets."
+            : "Two domains a model can build dashboards in. Browse the gallery, or read the prompt the model gets."}
         </p>
       </section>
 
@@ -99,13 +107,20 @@ export function KitWorkspace({ cloudUrl }: { cloudUrl: string }) {
           key={`${kit.id}-${startAt}`}
           kitId={kit.id}
           startAt={startAt}
-          onAsk={(prompt, from) => {
-            setAsk({ prompt, id: Date.now(), from });
-            setView("generate");
-          }}
+          onAsk={
+            canGenerate
+              ? (prompt, from) => {
+                  setAsk({ prompt, id: Date.now(), from });
+                  setView("generate");
+                }
+              : undefined
+          }
         />
       )}
-      {view === "generate" && (
+      {view === "generate" && !canGenerate && (
+        <GenerationPaused onGallery={() => setView("gallery")} onPrompt={() => setView("prompt")} />
+      )}
+      {view === "generate" && canGenerate && (
         <GenerateView
           key={kit.id}
           kitId={kit.id}
@@ -121,5 +136,35 @@ export function KitWorkspace({ cloudUrl }: { cloudUrl: string }) {
       )}
       {view === "prompt" && <PromptView key={kit.id} kitId={kit.id} />}
     </SiteShell>
+  );
+}
+
+/** Generate's place while the site has no key. */
+function GenerationPaused({
+  onGallery,
+  onPrompt,
+}: {
+  onGallery: () => void;
+  onPrompt: () => void;
+}) {
+  return (
+    <section className="view">
+      <div className="paused" role="status">
+        <strong>Generation is paused for now</strong>
+        <p>
+          Building dashboards from a question is switched off on this site for the moment. The
+          gallery&apos;s hand-written dashboards still run on live sample data, and the Prompt view
+          shows everything a model gets.
+        </p>
+        <div className="paused__actions">
+          <button type="button" className="button button--primary" onClick={onGallery}>
+            Browse the gallery
+          </button>
+          <button type="button" className="button" onClick={onPrompt}>
+            Read the prompt
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }

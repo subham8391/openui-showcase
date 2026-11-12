@@ -15,9 +15,10 @@ export function GalleryView({
   startAt?: number;
   /**
    * A question about a clicked chart point, with the gallery dashboard it was
-   * asked from; the page generates a dashboard that answers it.
+   * asked from; the page generates a dashboard that answers it. Without it
+   * (the site can't generate), charts offer no questions.
    */
-  onAsk: (prompt: string, from: { title: string; index: number }) => void;
+  onAsk?: (prompt: string, from: { title: string; index: number }) => void;
 }) {
   const { kit, library, toolProvider, calls, errors, onError, reset } = useKitRenderer(kitId);
   const [index, setIndex] = useState(startAt);
@@ -68,11 +69,14 @@ export function GalleryView({
         </div>
         <p className="view__hint">
           {dashboard.description} <span className="badge">Hand-written · no model needed</span>{" "}
-          <span className="badge badge--accent">Click a chart point to ask why</span>
+          {onAsk && <span className="badge badge--accent">Click a chart point to ask why</span>}
         </p>
       </div>
       <div className="canvas">
-        <DrillProvider onAsk={(prompt) => onAsk(prompt, { title: dashboard.title, index })}>
+        <DrillProvider
+          disabled={!onAsk}
+          onAsk={(prompt) => onAsk?.(prompt, { title: dashboard.title, index })}
+        >
           <Renderer
             key={`${kitId}-${index}`}
             response={dashboard.program}

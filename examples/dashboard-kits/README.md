@@ -60,7 +60,7 @@ pnpm dev
 
 `pnpm dev` writes the kit library specs and starts Next.js on http://127.0.0.1:3940. Edits to the kits hot-reload like any other code.
 
-The gallery and the Prompt view work without credentials. Generate runs on [OpenUI Dashboards](https://www.openui.com/docs/dashboards) and needs a key in `.env.local`:
+The gallery and the Prompt view work without credentials; without a key, Generate shows a paused notice and charts offer no dig-in questions. Generate runs on [OpenUI Dashboards](https://www.openui.com/docs/dashboards) and needs a key in `.env.local`:
 
 - `THESYS_API_KEY`: a key from the [Thesys Console](https://console.thesys.dev/keys). OpenUI Cloud is `https://api.thesys.dev`; set `THESYS_BASE_URL` to a gateway URL (such as `https://api.dev.thesys.dev/v1/embed`) to use that deployment instead.
 - `OPENUI_DASHBOARD_MODEL` optionally picks the model that builds and edits dashboards, as `provider/model`. The default is `anthropic/claude-sonnet-5.5`.

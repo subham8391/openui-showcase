@@ -658,6 +658,34 @@
   }
 }
 
+/* Generate's place while the site has no key. */
+.paused {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  padding: 20px 22px;
+  border: 1px solid var(--kit-border);
+  border-radius: 12px;
+  background: var(--kit-card);
+  font: 400 14px/1.55 var(--kit-font);
+  color: var(--kit-ink-2);
+}
+.paused strong {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--kit-ink);
+}
+.paused p {
+  margin: 0;
+}
+.paused__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 /* A line under the form saying what Generate runs on. */
 .composer__note {
   margin: 0;

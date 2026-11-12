@@ -40,7 +40,7 @@ cp .env.example .env.local   # add THESYS_API_KEY for Generate
 pnpm dev                      # http://127.0.0.1:3940
 ```
 
-The galleries and Prompt views need no key. Generate runs on OpenUI Dashboards and needs `THESYS_API_KEY`, a key from the [Thesys Console](https://console.thesys.dev/keys). `.env.example` lists the optional variables.
+The galleries and Prompt views need no key. Generate runs on OpenUI Dashboards and needs `THESYS_API_KEY`, a key from the [Thesys Console](https://console.thesys.dev/keys). `.env.example` lists the optional variables. Without a key, Generate shows a "paused" notice and charts don't offer dig-in questions; add the key and reload to turn it back on (no rebuild needed).
 
 | Script              | What it does                                                                      |
 | ------------------- | --------------------------------------------------------------------------------- |
@@ -71,7 +71,7 @@ Steps:
    - `VISITOR_SECRET`, to sign the visitor cookie with a secret of its own.
 3. Deploy.
 
-Generation is open to every visitor, so anyone using the site spends the key. Set a spending limit on the key.
+Generation is open to every visitor, so anyone using the site spends the key. Set a spending limit on the key. To pause generation, remove `THESYS_API_KEY` from the project: the site keeps serving the galleries and Prompt views, and Generate shows a paused notice.
 
 ## Layout
 

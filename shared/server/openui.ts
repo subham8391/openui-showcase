@@ -18,6 +18,14 @@ export function dashboardModel(): string {
   return process.env.OPENUI_DASHBOARD_MODEL ?? "anthropic/claude-sonnet-5.5";
 }
 
+/**
+ * Whether the site can generate: a key is set. Without one, Generate and
+ * dig-in are paused and the gallery and Prompt views still work.
+ */
+export function cloudAvailable(): boolean {
+  return Boolean(process.env.THESYS_API_KEY);
+}
+
 const clients = new Map<string, OpenUIClient>();
 
 /**
